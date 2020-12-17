@@ -14,7 +14,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-var tokenGenMutex = &sync.Mutex{}
+var tokenGenMutex sync.Mutex
 
 func generateToken(conn net.Conn) string {
 	tokenGenMutex.Lock()
@@ -66,7 +66,7 @@ func main() {
 		}
 	}()
 
-	var mutex = &sync.Mutex{}
+	var mutex sync.Mutex
 
 	for {
 		select {

@@ -1,1 +1,2 @@
-# go-project-fmi
+# Introduction-to-Go
+Go course at FMI
