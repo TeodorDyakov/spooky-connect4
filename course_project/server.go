@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"fmt"
 	"math/rand"
 	"net"
@@ -8,13 +9,6 @@ import (
 )
 
 var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
-
-// Application constants, defining host, port, and protocol.
-const (
-	CONN_HOST = "localhost"
-	CONN_PORT = "12345"
-	CONN_TYPE = "tcp"
-)
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -65,24 +59,39 @@ func main() {
 		}
 	}()
 
+	var mutex = &sync.Mutex{}
+
 	for {
 		select {
 		case conn := <-connectors:
-			opponentToken := ""
-			fmt.Fscan(conn, &opponentToken)
-			// check if conn is in map
-			if connectTo, ok := tokenToConn[opponentToken]; ok {
-				fmt.Fprintf(connectTo, "go\n")
-				fmt.Fprintf(conn, "go\n")
-				delete(tokenToConn, opponentToken)
-				go handleConnection(conn, connectTo)
-			} else {
-				//error hanle
-			}
+			go func(){
+				opponentToken := ""
+				fmt.Fscan(conn, &opponentToken)
+				
+				var connectTo net.Conn
+				ok := false
+
+				// check if conn is in map, synchronized so we dont get two player to connect to one
+				mutex.Lock()
+				if connectTo, ok = tokenToConn[opponentToken]; ok {
+					delete(tokenToConn, opponentToken)
+				}
+				mutex.Unlock()
+
+				if ok {
+					fmt.Fprintf(connectTo, "go\n")
+					fmt.Fprintf(conn, "go\n")
+					handleConnection(conn, connectTo)
+				} else {
+					fmt.Fprintf(conn, "error\n")
+				}
+			}()
 		case conn := <-waiters:
-			token := generateToken()
-			fmt.Fprintf(conn, "%s\n", token)
-			tokenToConn[token] = conn
+			go func(){
+				token := generateToken()
+				fmt.Fprintf(conn, "%s\n", token)
+				tokenToConn[token] = conn
+			}()
 		}
 	}
 

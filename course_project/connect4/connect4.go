@@ -107,9 +107,14 @@ func playMultiplayer() {
 		var msg string
 		fmt.Fscan(conn, &msg)
 
-		color = PLAYER_TWO_COLOR
-		opponentColor = PLAYER_ONE_COLOR
-		waiting = true
+		if msg == "go"{
+			color = PLAYER_TWO_COLOR
+			opponentColor = PLAYER_ONE_COLOR
+			waiting = true
+		}else{
+			fmt.Println("cant connect to friend!")
+			return
+		}
 	} else {
 		fmt.Fprintf(conn, "connect\n")
 
@@ -121,9 +126,14 @@ func playMultiplayer() {
 		var msg string
 		fmt.Fscan(conn, &msg)
 
-		color = PLAYER_ONE_COLOR
-		opponentColor = PLAYER_TWO_COLOR
-		waiting = false
+		if msg == "go"{
+			color = PLAYER_ONE_COLOR
+			opponentColor = PLAYER_TWO_COLOR
+			waiting = false
+		} else{
+			fmt.Println("cant connect to friend!")
+			return
+		}
 	}
 
 	for !b.areFourConnected(color) && !b.areFourConnected(opponentColor) {
