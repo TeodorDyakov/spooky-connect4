@@ -14,17 +14,24 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func generateToken() string {
-	token := ""
-	for{
+var tokenGenMutex = &sync.Mutex{}
+
+func generateToken(conn net.Conn) string {
+	tokenGenMutex.Lock()
+	var tok string
+	for {
+		token := ""
 		for i := 0; i < 5; i++ {
 			token += string(rune(rand.Intn(26) + 'A'))
 		}
 		if _, isDup := tokenToConn[token]; !isDup {
-			return token
+			tok = token
+			break
 		}
 	}
-	return token
+	tokenToConn[tok] = conn
+	tokenGenMutex.Unlock()
+	return tok
 }
 
 func main() {
@@ -88,9 +95,8 @@ func main() {
 			}()
 		case conn := <-waiters:
 			go func(){
-				token := generateToken()
+				token := generateToken(conn)
 				fmt.Fprintf(conn, "%s\n", token)
-				tokenToConn[token] = conn
 			}()
 		}
 	}
