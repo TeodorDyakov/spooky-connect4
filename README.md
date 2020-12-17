@@ -1,2 +1,2 @@
-# Introduction-to-Go
+# Connect four multiplayer server
 Go course at FMI
