@@ -40,7 +40,7 @@ func generateToken(conn net.Conn) string {
 func main() {
 	connectors := make(chan net.Conn, 128)
 	waiters := make(chan net.Conn, 128)
-	quick := make(chan net.Conn, 1)
+	quick := make(chan net.Conn, 128)
 
 	// Start the server and listen for incoming connections.
 	listener, err := net.Listen("tcp", ":"+ CONN_PORT)
@@ -92,7 +92,7 @@ func main() {
 				mutex.Unlock()
 
 				if ok {
-					handleConnection(conn, connectTo)
+					startGame(conn, connectTo)
 				} else {
 					fmt.Fprintf(conn, "error\n")
 				}
@@ -103,7 +103,7 @@ func main() {
 				fmt.Fprintf(conn, "%s\n", token)
 			}()
 		case conn := <-quick:
-			go handleConnection(conn, <-quick)
+			go startGame(conn, <-quick)
 		}
 	}
 
@@ -120,7 +120,7 @@ func readMsgAndSend(from, to net.Conn) bool {
 	return true
 }
 
-func handleConnection(conn1, conn2 net.Conn) {
+func startGame(conn1, conn2 net.Conn) {
 	defer conn1.Close()
 	defer conn2.Close()
 	fmt.Fprintf(conn2, "second\n")
