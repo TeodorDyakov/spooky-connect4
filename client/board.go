@@ -7,6 +7,7 @@ import (
 type Board struct {
 	board [][]string
 	col   []int
+	movesMade int
 }
 
 const (
@@ -15,10 +16,14 @@ const (
 	EMPTY_SPOT   = "_"
 )
 
+func (b *Board) gameOver() bool{
+	return b.movesMade == 42 || b.areFourConnected(PLAYER_ONE_COLOR) || b.areFourConnected(PLAYER_TWO_COLOR)	
+}
+
 func NewBoard() *Board {
 	var b *Board
 	b = new(Board)
-
+	b.movesMade = 0
 	b.col = make([]int, BOARD_WIDTH)
 	//initialize the connect 4 b.board
 	for i := 0; i < BOARD_HEIGHT; i++ {
@@ -48,12 +53,14 @@ func (b *Board) printBoard() {
 func (b *Board) undoDrop(column int) {
 	b.col[column]--
 	b.board[5-b.col[column]][column] = EMPTY_SPOT
+	b.movesMade--
 }
 
 func (b *Board) drop(column int, player string) bool {
 	if column < len(b.board[0]) && (column >= 0) && b.col[column] < len(b.board) {
 		b.board[5-b.col[column]][column] = player
 		b.col[column]++
+		b.movesMade++
 		return true
 	}
 	return false

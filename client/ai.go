@@ -9,9 +9,9 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-const(
-	BIG              = 100000
-	SMALL            = -BIG
+const (
+	BIG   = 100000
+	SMALL = -BIG
 )
 
 func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int, int) {
@@ -31,7 +31,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 		value = SMALL
 		for _, column := range shuffledColumns {
 			if b.drop(column, PLAYER_TWO_COLOR) {
-				new_score, _ := alphabeta(b, false, depth + 1, alpha, beta, max_depth)
+				new_score, _ := alphabeta(b, false, depth+1, alpha, beta, max_depth)
 				b.undoDrop(column)
 
 				if value < new_score {
@@ -48,9 +48,9 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 		value = BIG
 		for _, column := range shuffledColumns {
 			if b.drop(column, PLAYER_ONE_COLOR) {
-				new_score, _ := alphabeta(b, true, depth + 1, alpha, beta, max_depth)
+				new_score, _ := alphabeta(b, true, depth+1, alpha, beta, max_depth)
 				b.undoDrop(column)
-				
+
 				if value > new_score {
 					bestMove = column
 					value = new_score
@@ -65,15 +65,15 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 	return value, bestMove
 }
 
-func min(a, b int) int{
-	if(a > b){
+func min(a, b int) int {
+	if a > b {
 		return b
 	}
 	return a
 }
 
-func max(a, b int) int{
-	if(a < b){
+func max(a, b int) int {
+	if a < b {
 		return b
 	}
 	return a

@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	CONN_HOST        = "localhost"
-	CONN_PORT        = "12345"
-	CONN_TYPE        = "tcp"
-	PLAYER_ONE_COLOR = "○"
-	PLAYER_TWO_COLOR = "◙"
-	MIN_DIFFICULTY   = 1
-	MAX_DIFFICULTY   = 12
+	CONN_HOST            = "localhost"
+	CONN_PORT            = "12345"
+	CONN_TYPE            = "tcp"
+	PLAYER_ONE_COLOR     = "○"
+	PLAYER_TWO_COLOR     = "◙"
+	MIN_DIFFICULTY       = 1
+	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 60
 )
 
@@ -42,7 +42,7 @@ func playAgainstAi() {
 
 	waiting := false
 
-	for !b.areFourConnected(PLAYER_ONE_COLOR) && !b.areFourConnected(PLAYER_TWO_COLOR) {
+	for !b.gameOver() {
 
 		clearConsole()
 		b.printBoard()
@@ -74,8 +74,10 @@ func playAgainstAi() {
 	b.printBoard()
 	if b.areFourConnected(PLAYER_ONE_COLOR) {
 		fmt.Println("You won!")
-	} else {
+	} else if b.areFourConnected(PLAYER_TWO_COLOR){
 		fmt.Println("You lost.")
+	} else {
+		fmt.Println("Tie")
 	}
 }
 
@@ -103,7 +105,7 @@ func playMultiplayer() {
 		fmt.Fscan(conn, &token)
 		fmt.Printf("You token is:%s\n", token)
 		fmt.Println("waiting for a friend to connect...")
-	} else if input == 2{
+	} else if input == 2 {
 		fmt.Fprintf(conn, "connect\n")
 		var token string
 		fmt.Printf("Enter friend token\n")
@@ -116,20 +118,20 @@ func playMultiplayer() {
 
 	var msg string
 	fmt.Fscan(conn, &msg)
-	if msg == "second"{
+	if msg == "second" {
 		color = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
 		waiting = true
-	} else if msg == "first"{
+	} else if msg == "first" {
 		color = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
 		waiting = false
-	}else {
+	} else {
 		fmt.Println("cant connect to friend!")
 		return
 	}
 
-	for !b.areFourConnected(color) && !b.areFourConnected(opponentColor) {
+	for !b.gameOver() {
 
 		clearConsole()
 		b.printBoard()
@@ -139,8 +141,8 @@ func playMultiplayer() {
 
 			var msg string
 			fmt.Fscan(conn, &msg)
-			
-			if msg == "timeout"{
+
+			if msg == "timeout" {
 				fmt.Println("opponent disconnected!")
 				return
 			}
@@ -154,7 +156,7 @@ func playMultiplayer() {
 				var input string
 				fmt.Scan(&input)
 				column, err := strconv.Atoi(input)
-				
+
 				if err != nil || !b.drop(column, color) {
 					fmt.Println("You cant place here! Try another column")
 				} else {
@@ -172,8 +174,10 @@ func playMultiplayer() {
 	b.printBoard()
 	if b.areFourConnected(color) {
 		fmt.Println("You won!")
-	} else {
+	} else if b.areFourConnected(opponentColor){
 		fmt.Println("You lost.")
+	}else{
+		fmt.Println("Tie")
 	}
 }
 
@@ -198,4 +202,3 @@ func main() {
 	}
 
 }
-	
