@@ -37,6 +37,8 @@ func generateToken(conn net.Conn) string {
 	return tok
 }
 
+var toClose chan net.Conn = make(chan net.Conn, 128)
+
 func main() {
 	connectors := make(chan net.Conn, 128)
 	waiters := make(chan net.Conn, 128)
@@ -56,7 +58,6 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println("Client connected.")
 			fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
 
 			var playerType string
@@ -79,11 +80,12 @@ func main() {
 		case conn := <-connectors:
 			go func(){
 				opponentToken := ""
-				fmt.Fscan(conn, &opponentToken)
-				
+				_, err := fmt.Fscan(conn, &opponentToken)
+				if err != nil{
+					toClose <- conn
+				}
 				var connectTo net.Conn
 				ok := false
-
 				// check if conn is in map, synchronized so we dont get two player to connect to one
 				mutex.Lock()
 				if connectTo, ok = tokenToConn[opponentToken]; ok {
@@ -95,15 +97,24 @@ func main() {
 					startGame(conn, connectTo)
 				} else {
 					fmt.Fprintf(conn, "error\n")
+					toClose <- conn
 				}
 			}()
 		case conn := <-waiters:
 			go func(){
-				token := generateToken(conn)
-				fmt.Fprintf(conn, "%s\n", token)
+				token := generateToken
+				_, err := fmt.Fprintf(conn, "%s\n", token)
+				if err != nil{
+					toClose <- conn
+				}
 			}()
 		case conn := <-quick:
 			go startGame(conn, <-quick)
+		case conn := <-toClose:
+			go func(){
+				conn.Close()
+				fmt.Println("Client " + conn.RemoteAddr().String() + " disconnected.")
+			}()
 		}
 	}
 
@@ -111,23 +122,22 @@ func main() {
 
 func readMsgAndSend(from, to net.Conn) bool {
 	var msg string
-	_, err := fmt.Fscan(from, &msg)
-	if err != nil {
-		fmt.Println("Client " + from.RemoteAddr().String() + " disconnected.")
+	_, err1 := fmt.Fscan(from, &msg)
+	_, err2 := fmt.Fprintf(to, "%s\n", msg)
+	if err1 != nil || err2 != nil || msg == "end" {
+		toClose <- to
+		toClose <- from
 		return false
 	}
-	fmt.Fprintf(to, "%s\n", msg)
 	return true
 }
 
 func startGame(conn1, conn2 net.Conn) {
-	defer conn1.Close()
-	defer conn2.Close()
 	fmt.Fprintf(conn2, "second\n")
 	fmt.Fprintf(conn1, "first\n")
 	for {
 		if !readMsgAndSend(conn1, conn2) {
-			return
+			return 
 		}
 		if !readMsgAndSend(conn2, conn1) {
 			return
