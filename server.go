@@ -7,18 +7,23 @@ import (
 	"net"
 	"time"
 )
-
+/*
+map from token to the connection of the room
+*/
 var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
 var tokenGenMutex sync.Mutex
 
 const(
 	CONN_TYPE = "tcp"
 	CONN_PORT = "12345"
+	TIMEOUT_SECONDS = 5
 )
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
+/*
+generate a unique token for the connection and return it
+*/
 func generateToken(conn net.Conn) string {
 	tokenGenMutex.Lock()
 	var tok string
@@ -37,6 +42,9 @@ func generateToken(conn net.Conn) string {
 	return tok
 }
 
+/*
+connecion that are unused and must be closed
+*/
 var toClose chan net.Conn = make(chan net.Conn, 128)
 
 func main() {
@@ -120,26 +128,54 @@ func main() {
 
 }
 
-func readMsgAndSend(from, to net.Conn) bool {
+/*
+read a string from the connection "from" and sent it to "to" 
+if it takes more than 60 seconds return false. if the msg is "end" it means the game has end
+therefore return false
+*/
+func makeMove(from, to net.Conn) bool {
 	var msg string
-	_, err1 := fmt.Fscan(from, &msg)
-	_, err2 := fmt.Fprintf(to, "%s\n", msg)
-	if err1 != nil || err2 != nil || msg == "end" {
-		toClose <- to
-		toClose <- from
-		return false
+	c := make(chan bool)
+	
+	go func(){
+		fmt.Fscan(from, &msg)
+		fmt.Fprintf(to, "%s\n", msg)
+		if msg == "end"{
+			c <- false
+		} else{
+			c <- true 
+		}
+	}()
+
+	select{
+		case ok := <-c:
+			return ok
+		case <-time.After(TIMEOUT_SECONDS * time.Second):
+			return false
 	}
-	return true
+	return false
 }
 
+/*
+start the game by alternating communication between the two connections
+*/
 func startGame(conn1, conn2 net.Conn) {
 	fmt.Fprintf(conn2, "second\n")
 	fmt.Fprintf(conn1, "first\n")
+	
 	for {
-		if !readMsgAndSend(conn1, conn2) {
+		if !makeMove(conn1, conn2) {
+			fmt.Fprintf(conn1, "timeout\n")
+			fmt.Fprintf(conn2, "timeout\n")
+			toClose <- conn1
+			toClose <- conn2
 			return 
 		}
-		if !readMsgAndSend(conn2, conn1) {
+		if !makeMove(conn2, conn1) {
+			fmt.Fprintf(conn1, "timeout\n")
+			fmt.Fprintf(conn2, "timeout\n")
+			toClose <- conn1
+			toClose <- conn2
 			return
 		}
 	}

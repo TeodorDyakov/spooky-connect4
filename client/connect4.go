@@ -17,6 +17,7 @@ const (
 	PLAYER_TWO_COLOR = "◙"
 	MIN_DIFFICULTY   = 1
 	MAX_DIFFICULTY   = 12
+	SECONDS_TO_MAKE_TURN = 60
 )
 
 var b *Board = NewBoard()
@@ -136,23 +137,16 @@ func playMultiplayer() {
 		if waiting {
 			fmt.Println("waiting for oponent move...\n")
 
-			c1 := make(chan int, 1)
-
-			go func() {
-				var column int
-				fmt.Fscan(conn, &column)
-				c1 <- column
-			}()
-
-			select {
-			case otherPlayerColumn := <-c1:
-				b.drop(otherPlayerColumn, opponentColor)
-				waiting = false
-			case <-time.After(60 * time.Second):
-				fmt.Println("timeout Opponent failed to make a move in 60 seconds")
+			var msg string
+			fmt.Fscan(conn, &msg)
+			
+			if msg == "timeout"{
+				fmt.Println("opponent disconnected!")
 				return
 			}
-
+			column, _ := strconv.Atoi(msg)
+			b.drop(column, opponentColor)
+			waiting = false
 		} else {
 			for {
 				fmt.Printf("Enter column to drop: ")
