@@ -9,12 +9,15 @@ import (
 )
 
 var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
+var tokenGenMutex sync.Mutex
 
+const(
+	CONN_TYPE = "tcp"
+	CONN_PORT = "12345"
+)
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
-var tokenGenMutex sync.Mutex
 
 func generateToken(conn net.Conn) string {
 	tokenGenMutex.Lock()
@@ -37,9 +40,10 @@ func generateToken(conn net.Conn) string {
 func main() {
 	connectors := make(chan net.Conn, 128)
 	waiters := make(chan net.Conn, 128)
+	quick := make(chan net.Conn, 1)
 
 	// Start the server and listen for incoming connections.
-	listener, err := net.Listen("tcp", ":12345")
+	listener, err := net.Listen("tcp", ":"+ CONN_PORT)
 	if err != nil {
 		panic(err)
 	}
@@ -55,13 +59,15 @@ func main() {
 			fmt.Println("Client connected.")
 			fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
 
-			var waitOrConnect string
-			fmt.Fscan(conn, &waitOrConnect)
+			var playerType string
+			fmt.Fscan(conn, &playerType)
 
-			if waitOrConnect == "connect" {
+			if playerType == "connect" {
 				connectors <- conn
-			} else if waitOrConnect == "wait" {
+			} else if playerType == "wait" {
 				waiters <- conn
+			} else if playerType == "quick" {
+				quick <- conn
 			}
 		}
 	}()
@@ -86,8 +92,6 @@ func main() {
 				mutex.Unlock()
 
 				if ok {
-					fmt.Fprintf(connectTo, "go\n")
-					fmt.Fprintf(conn, "go\n")
 					handleConnection(conn, connectTo)
 				} else {
 					fmt.Fprintf(conn, "error\n")
@@ -98,6 +102,8 @@ func main() {
 				token := generateToken(conn)
 				fmt.Fprintf(conn, "%s\n", token)
 			}()
+		case conn := <-quick:
+			go handleConnection(conn, <-quick)
 		}
 	}
 
@@ -117,7 +123,8 @@ func readMsgAndSend(from, to net.Conn) bool {
 func handleConnection(conn1, conn2 net.Conn) {
 	defer conn1.Close()
 	defer conn2.Close()
-
+	fmt.Fprintf(conn2, "second\n")
+	fmt.Fprintf(conn1, "first\n")
 	for {
 		if !readMsgAndSend(conn1, conn2) {
 			return

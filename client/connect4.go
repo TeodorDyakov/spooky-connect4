@@ -92,48 +92,40 @@ func playMultiplayer() {
 		os.Exit(1)
 	}
 
-	fmt.Println("enter 1 to make a room or 2 to connect to room")
+	fmt.Println("enter 1 to make a room or 2 to connect to room or 3 for quikckplay")
 	var input int
 	fmt.Scan(&input)
 
 	if input == 1 {
 		fmt.Fprintf(conn, "wait\n")
-
 		var token string
 		fmt.Fscan(conn, &token)
 		fmt.Printf("You token is:%s\n", token)
 		fmt.Println("waiting for a friend to connect...")
-
-		var msg string
-		fmt.Fscan(conn, &msg)
-
-		if msg == "go"{
-			color = PLAYER_TWO_COLOR
-			opponentColor = PLAYER_ONE_COLOR
-			waiting = true
-		}else{
-			fmt.Println("cant connect to friend!")
-			return
-		}
-	} else {
+	} else if input == 2{
 		fmt.Fprintf(conn, "connect\n")
-
 		var token string
 		fmt.Printf("Enter friend token\n")
 		fmt.Scan(&token)
-
 		fmt.Fprintf(conn, "%s\n", token)
-		var msg string
-		fmt.Fscan(conn, &msg)
+	} else {
+		fmt.Println("Searhing for opponent...")
+		fmt.Fprintf(conn, "quick\n")
+	}
 
-		if msg == "go"{
-			color = PLAYER_ONE_COLOR
-			opponentColor = PLAYER_TWO_COLOR
-			waiting = false
-		} else{
-			fmt.Println("cant connect to friend!")
-			return
-		}
+	var msg string
+	fmt.Fscan(conn, &msg)
+	if msg == "second"{
+		color = PLAYER_TWO_COLOR
+		opponentColor = PLAYER_ONE_COLOR
+		waiting = true
+	} else if msg == "first"{
+		color = PLAYER_ONE_COLOR
+		opponentColor = PLAYER_TWO_COLOR
+		waiting = false
+	}else {
+		fmt.Println("cant connect to friend!")
+		return
 	}
 
 	for !b.areFourConnected(color) && !b.areFourConnected(opponentColor) {
@@ -165,9 +157,10 @@ func playMultiplayer() {
 			for {
 				fmt.Printf("Enter column to drop: ")
 
-				var column int
-				_, err = fmt.Scan(&column)
-
+				var input string
+				fmt.Scan(&input)
+				column, err := strconv.Atoi(input)
+				
 				if err != nil || !b.drop(column, color) {
 					fmt.Println("You cant place here! Try another column")
 				} else {
