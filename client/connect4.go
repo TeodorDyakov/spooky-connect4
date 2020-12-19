@@ -13,8 +13,8 @@ const (
 	CONN_HOST            = "localhost"
 	CONN_PORT            = "12345"
 	CONN_TYPE            = "tcp"
-	PLAYER_ONE_COLOR     = "○"
-	PLAYER_TWO_COLOR     = "◙"
+	PLAYER_ONE_COLOR     = "◯"
+	PLAYER_TWO_COLOR     = "⬤"
 	MIN_DIFFICULTY       = 1
 	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 60

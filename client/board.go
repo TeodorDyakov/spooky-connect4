@@ -13,7 +13,7 @@ type Board struct {
 const (
 	BOARD_WIDTH  = 7
 	BOARD_HEIGHT = 6
-	EMPTY_SPOT   = "_"
+	EMPTY_SPOT   = "∟"
 )
 
 func (b *Board) gameOver() bool{
