@@ -142,7 +142,7 @@ func playMultiplayer() {
 			var msg string
 			fmt.Fscan(conn, &msg)
 
-			if msg == "timeout" {
+			if msg == "timeout" || msg == "error"{
 				fmt.Println("opponent disconnected!")
 				return
 			}
