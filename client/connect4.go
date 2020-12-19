@@ -74,7 +74,7 @@ func playAgainstAi() {
 	b.printBoard()
 	if b.areFourConnected(PLAYER_ONE_COLOR) {
 		fmt.Println("You won!")
-	} else if b.areFourConnected(PLAYER_TWO_COLOR){
+	} else if b.areFourConnected(PLAYER_TWO_COLOR) {
 		fmt.Println("You lost.")
 	} else {
 		fmt.Println("Tie")
@@ -174,9 +174,9 @@ func playMultiplayer() {
 	b.printBoard()
 	if b.areFourConnected(color) {
 		fmt.Println("You won!")
-	} else if b.areFourConnected(opponentColor){
+	} else if b.areFourConnected(opponentColor) {
 		fmt.Println("You lost.")
-	}else{
+	} else {
 		fmt.Println("Tie")
 	}
 }

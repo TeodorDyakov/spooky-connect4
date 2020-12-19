@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Board struct {
-	board [][]string
-	col   []int
+	board     [][]string
+	col       []int
 	movesMade int
 }
 
@@ -16,8 +17,8 @@ const (
 	EMPTY_SPOT   = "∟"
 )
 
-func (b *Board) gameOver() bool{
-	return b.movesMade == 42 || b.areFourConnected(PLAYER_ONE_COLOR) || b.areFourConnected(PLAYER_TWO_COLOR)	
+func (b *Board) gameOver() bool {
+	return b.movesMade == 42 || b.areFourConnected(PLAYER_ONE_COLOR) || b.areFourConnected(PLAYER_TWO_COLOR)
 }
 
 func NewBoard() *Board {
@@ -38,11 +39,14 @@ func NewBoard() *Board {
 }
 
 func (b *Board) printBoard() {
+	space := strings.Repeat(" ", 20)
+	fmt.Print(space)
 	for i := 0; i < len(b.board[0]); i++ {
 		fmt.Printf("%d ", i)
 	}
 	fmt.Println()
 	for i := 0; i < len(b.board); i++ {
+		fmt.Print(space)
 		for j := 0; j < len(b.board[0]); j++ {
 			fmt.Print(b.board[i][j] + " ")
 		}
