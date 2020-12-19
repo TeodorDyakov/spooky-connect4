@@ -163,11 +163,11 @@ func makeMove(from, to net.Conn) bool {
 start the game by alternating communication between the two connections
 */
 func startGame(conn1, conn2 net.Conn) {
-	defer conn1.Close()
-	defer fmt.Println("Client " + conn1.RemoteAddr().String() + " disconnected.")
-	defer conn2.Close()
-	defer fmt.Println("Client " + conn2.RemoteAddr().String() + " disconnected.")
-
+	defer func(){
+		toClose <- conn1
+		toClose <- conn2
+	}()
+	
 	_, err2 := fmt.Fprintf(conn2, "second\n")
 	if err2 != nil{
 		fmt.Println(conn1, "error")
