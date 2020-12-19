@@ -1,29 +1,26 @@
 package main
 
 import (
+	"sync"
 	"fmt"
 	"math/rand"
 	"net"
-	"sync"
 	"time"
 )
-
 /*
 map from token to the connection of the room
 */
 var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
 var tokenGenMutex sync.Mutex
 
-const (
-	CONN_TYPE       = "tcp"
-	CONN_PORT       = "12345"
+const(
+	CONN_TYPE = "tcp"
+	CONN_PORT = "12345"
 	TIMEOUT_SECONDS = 60
 )
-
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
 /*
 generate a unique token for the connection and return it
 */
@@ -56,7 +53,7 @@ func main() {
 	quick := make(chan net.Conn, 128)
 
 	// Start the server and listen for incoming connections.
-	listener, err := net.Listen("tcp", ":"+CONN_PORT)
+	listener, err := net.Listen("tcp", ":"+ CONN_PORT)
 	if err != nil {
 		panic(err)
 	}
@@ -89,10 +86,10 @@ func main() {
 	for {
 		select {
 		case conn := <-connectors:
-			go func() {
+			go func(){
 				opponentToken := ""
 				_, err := fmt.Fscan(conn, &opponentToken)
-				if err != nil {
+				if err != nil{
 					toClose <- conn
 				}
 				var connectTo net.Conn
@@ -112,17 +109,17 @@ func main() {
 				}
 			}()
 		case conn := <-waiters:
-			go func() {
-				token := generateToken
+			go func(){
+				token := generateToken(conn)
 				_, err := fmt.Fprintf(conn, "%s\n", token)
-				if err != nil {
+				if err != nil{
 					toClose <- conn
 				}
 			}()
 		case conn := <-quick:
 			go startGame(conn, <-quick)
 		case conn := <-toClose:
-			go func() {
+			go func(){
 				conn.Close()
 				fmt.Println("Client " + conn.RemoteAddr().String() + " disconnected.")
 			}()
@@ -132,29 +129,29 @@ func main() {
 }
 
 /*
-read a string from the connection "from" and sent it to "to"
+read a string from the connection "from" and sent it to "to" 
 if it takes more than 60 seconds return false. if the msg is "end" it means the game has end
 therefore return false
 */
 func makeMove(from, to net.Conn) bool {
 	var msg string
 	c := make(chan bool)
-
-	go func() {
+	
+	go func(){
 		fmt.Fscan(from, &msg)
 		fmt.Fprintf(to, "%s\n", msg)
-		if msg == "end" {
+		if msg == "end"{
 			c <- false
-		} else {
-			c <- true
+		} else{
+			c <- true 
 		}
 	}()
 
-	select {
-	case ok := <-c:
-		return ok
-	case <-time.After(TIMEOUT_SECONDS * time.Second):
-		return false
+	select{
+		case ok := <-c:
+			return ok
+		case <-time.After(TIMEOUT_SECONDS * time.Second):
+			return false
 	}
 	return false
 }
@@ -165,14 +162,14 @@ start the game by alternating communication between the two connections
 func startGame(conn1, conn2 net.Conn) {
 	fmt.Fprintf(conn2, "second\n")
 	fmt.Fprintf(conn1, "first\n")
-
+	
 	for {
 		if !makeMove(conn1, conn2) {
 			fmt.Fprintf(conn1, "timeout\n")
 			fmt.Fprintf(conn2, "timeout\n")
 			toClose <- conn1
 			toClose <- conn2
-			return
+			return 
 		}
 		if !makeMove(conn2, conn1) {
 			fmt.Fprintf(conn1, "timeout\n")
