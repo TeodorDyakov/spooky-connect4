@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"os"
+	// "os"
 	"strconv"
 	"time"
 )
@@ -91,8 +91,7 @@ func playMultiplayer() {
 	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
-		fmt.Println("Error connecting:", err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 
 	fmt.Println("enter 1 to make a room or 2 to connect to room or 3 for quikckplay")
@@ -100,24 +99,42 @@ func playMultiplayer() {
 	fmt.Scan(&input)
 
 	if input == 1 {
-		fmt.Fprintf(conn, "wait\n")
+		_, err := fmt.Fprintf(conn, "wait\n")
+		if err != nil{
+			panic(err)
+		}
 		var token string
-		fmt.Fscan(conn, &token)
+		_, err = fmt.Fscan(conn, &token)
+		if err != nil{
+			panic(err)
+		}
 		fmt.Printf("You token is:%s\n", token)
 		fmt.Println("waiting for a friend to connect...")
 	} else if input == 2 {
-		fmt.Fprintf(conn, "connect\n")
+		_, err := fmt.Fprintf(conn, "connect\n")
+		if err != nil{
+			panic(err)
+		}
 		var token string
 		fmt.Printf("Enter friend token\n")
 		fmt.Scan(&token)
-		fmt.Fprintf(conn, "%s\n", token)
+		_, err = fmt.Fprintf(conn, "%s\n", token)
+		if err != nil{
+			panic(err)
+		}
 	} else {
 		fmt.Println("Searhing for opponent...")
-		fmt.Fprintf(conn, "quick\n")
+		_, err := fmt.Fprintf(conn, "quick\n")
+		if err != nil{
+			panic(err)
+		}
 	}
 
 	var msg string
-	fmt.Fscan(conn, &msg)
+	_, err = fmt.Fscan(conn, &msg)
+	if err != nil{
+			panic(err)
+	}
 	if msg == "second" {
 		color = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
@@ -140,8 +157,10 @@ func playMultiplayer() {
 			fmt.Println("waiting for oponent move...\n")
 
 			var msg string
-			fmt.Fscan(conn, &msg)
-
+			_, err := fmt.Fscan(conn, &msg)
+			if err != nil{
+				panic(err)
+			}
 			if msg == "timeout" || msg == "error"{
 				fmt.Println("opponent disconnected!")
 				return
@@ -160,7 +179,10 @@ func playMultiplayer() {
 				if err != nil || !b.drop(column, color) {
 					fmt.Println("You cant place here! Try another column")
 				} else {
-					fmt.Fprintf(conn, "%d\n", column)
+					_, err := fmt.Fprintf(conn, "%d\n", column)
+					if err != nil{
+						panic(err)
+					}
 					waiting = true
 					break
 				}
