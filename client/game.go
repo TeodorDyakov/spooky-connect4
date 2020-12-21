@@ -1,18 +1,18 @@
 package main
 
 import (
-	_ "image/png"
-	"log"
+	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"fmt"
-	"strconv"
+	"image/color"
+	_ "image/png"
+	"log"
 	"net"
-    "image/color"   
+	"strconv"
 )
 
 var img *ebiten.Image
@@ -34,13 +34,13 @@ func init() {
 		log.Fatal(err)
 	}
 	h, _ := img.Size()
-	tileHeight = (float64(h))/7.0
+	tileHeight = (float64(h)) / 7.0
 
 	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
 		log.Fatal(err)
 	}
-		const dpi = 72
+	const dpi = 72
 	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    24,
 		DPI:     dpi,
@@ -49,6 +49,7 @@ func init() {
 }
 
 type Game struct{}
+
 var tileHeight float64
 var mplusNormalFont font.Face
 
@@ -73,49 +74,49 @@ var c chan int = make(chan int, 1)
 
 func (g *Game) Update() error {
 	press := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
-	
-	if press && !lastFrameClick && !gameOver{
-       mouseX, _ := ebiten.CursorPosition()
-       c <- col(mouseX)	
-    }
-    if press{
+
+	if press && !lastFrameClick && !gameOver {
+		mouseX, _ := ebiten.CursorPosition()
+		c <- col(mouseX)
+	}
+	if press {
 		lastFrameClick = true
-	}else{
+	} else {
 		lastFrameClick = false
 	}
-    return nil
+	return nil
 }
 
 var cnt int
 
 func col(x int) int {
-	return int(float64(x-10)/tileHeight) 
+	return int(float64(x-10) / tileHeight)
 }
 
 var b *Board = NewBoard()
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string
-	if !gameStarted{
+	if !gameStarted {
 		msg = "waiting"
-	}else if gameOver {
-		if playerOneWin{
+	} else if gameOver {
+		if playerOneWin {
 			msg = "you win :D"
-		}else{
+		} else {
 			msg = "you lose :("
 		}
-	} else if !waiting{
+	} else if !waiting {
 		msg = "your turn"
-	} else{
+	} else {
 		msg = "opponent turn"
 	}
 	text.Draw(screen, msg, mplusNormalFont, 200, 450, color.White)
 	screen.DrawImage(img, nil)
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
-			if b.board[i][j] == PLAYER_TWO_COLOR{
+			if b.board[i][j] == PLAYER_TWO_COLOR {
 				drawTile(j, i, PLAYER_TWO_COLOR, screen)
-			} else if b.board[i][j] == PLAYER_ONE_COLOR{
+			} else if b.board[i][j] == PLAYER_ONE_COLOR {
 				drawTile(j, i, PLAYER_ONE_COLOR, screen)
 			}
 		}
@@ -126,9 +127,9 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 
 	// var tileWidth float64 = (float64(h))/7.0
-	op.GeoM.Translate(10 + float64(x) * tileHeight, 10+ float64(y)*tileHeight)
+	op.GeoM.Translate(10+float64(x)*tileHeight, 10+float64(y)*tileHeight)
 	// op.GeoM.Translate(screenWidth/2, screenHeight/2)
-	if(player == PLAYER_TWO_COLOR){
+	if player == PLAYER_TWO_COLOR {
 		screen.DrawImage(gopher, op)
 	} else {
 		screen.DrawImage(yellow, op)
@@ -139,9 +140,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 490, 480
 }
 
-func playAgainstAi(){
+func playAgainstAi() {
 	boardCopy := NewBoard()
-	for !b.gameOver(){
+	for !b.gameOver() {
 		if waiting {
 			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 12)
 			b.drop(bestMove, PLAYER_TWO_COLOR)
@@ -149,7 +150,7 @@ func playAgainstAi(){
 			waiting = false
 		} else {
 			var column int
-			column = <- c
+			column = <-c
 			if !b.drop(column, PLAYER_ONE_COLOR) {
 			} else {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
@@ -158,7 +159,7 @@ func playAgainstAi(){
 		}
 		gameOver = true
 		if b.areFourConnected(PLAYER_ONE_COLOR) {
-		playerOneWin = true
+			playerOneWin = true
 		} else if b.areFourConnected(PLAYER_TWO_COLOR) {
 			// fmt.Println("You lost.")
 		} else {
@@ -169,12 +170,12 @@ func playAgainstAi(){
 
 var c1 chan int = make(chan int, 1)
 
-func playMultiplayer(){
+func playMultiplayer() {
 	var conn net.Conn
 	var color string
 	var opponentColor string
 
-	waiting, conn = lobby() 
+	waiting, conn = lobby()
 
 	if waiting {
 		color = PLAYER_TWO_COLOR
@@ -192,10 +193,10 @@ func playMultiplayer(){
 
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
-			if err != nil{
+			if err != nil {
 				panic(err)
 			}
-			if msg == "timeout" || msg == "error"{
+			if msg == "timeout" || msg == "error" {
 				fmt.Println("opponent disconnected!")
 				panic(nil)
 				return
@@ -204,10 +205,10 @@ func playMultiplayer(){
 			b.drop(column, opponentColor)
 			waiting = false
 		} else {
-				column := <- c
-				if b.drop(column, color) {
+			column := <-c
+			if b.drop(column, color) {
 				_, err := fmt.Fprintf(conn, "%d\n", column)
-				if err != nil{
+				if err != nil {
 					panic(err)
 				}
 				waiting = true
@@ -225,12 +226,11 @@ func main() {
 	ebiten.SetWindowTitle("Render an image")
 
 	// boardCopy := NewBoard()
-				
+
 	go playMultiplayer()
 	<-c1
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
-	
-}
 
+}

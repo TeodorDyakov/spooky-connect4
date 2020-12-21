@@ -142,12 +142,12 @@ func makeMove(from, to net.Conn) bool {
 
 	go func() {
 		_, err := fmt.Fscan(from, &msg)
-		if err != nil{
-			c<- false
+		if err != nil {
+			c <- false
 		}
 		_, err = fmt.Fprintf(to, "%s\n", msg)
-		if err != nil{
-			c<- false
+		if err != nil {
+			c <- false
 		}
 		if msg == "end" {
 			c <- false
@@ -169,20 +169,20 @@ func makeMove(from, to net.Conn) bool {
 start the game by alternating communication between the two connections
 */
 func startGame(conn1, conn2 net.Conn) {
-	defer func(){
+	defer func() {
 		toClose <- conn1
 		toClose <- conn2
 	}()
-	
+
 	_, err2 := fmt.Fprintf(conn2, "second\n")
-	if err2 != nil{
+	if err2 != nil {
 		fmt.Println(conn1, "error")
 		return
 	}
 	_, err1 := fmt.Fprintf(conn1, "first\n")
-	if err1 != nil{
+	if err1 != nil {
 		fmt.Println(conn2, "error")
-		return	
+		return
 	}
 	for {
 		fmt.Println("debug")

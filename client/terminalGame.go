@@ -86,7 +86,7 @@ func playMultiplayer() {
 	var color string
 	var opponentColor string
 
-	waiting, conn := lobby() 
+	waiting, conn := lobby()
 
 	if waiting {
 		color = PLAYER_TWO_COLOR
@@ -105,10 +105,10 @@ func playMultiplayer() {
 
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
-			if err != nil{
+			if err != nil {
 				panic(err)
 			}
-			if msg == "timeout" || msg == "error"{
+			if msg == "timeout" || msg == "error" {
 				fmt.Println("opponent disconnected!")
 				return
 			}
@@ -127,7 +127,7 @@ func playMultiplayer() {
 					fmt.Println("You cant place here! Try another column")
 				} else {
 					_, err := fmt.Fprintf(conn, "%d\n", column)
-					if err != nil{
+					if err != nil {
 						panic(err)
 					}
 					waiting = true

@@ -1,12 +1,13 @@
 package main
 
-import(
+import (
 	"fmt"
 	"net"
 )
+
 /*
 Start the command line in which you connect to another player
-return a boolean value indicating whenther you are first or 
+return a boolean value indicating whenther you are first or
 you should wait your tun when game starts and a connection to the server
 */
 func lobby() (bool, net.Conn) {
@@ -24,40 +25,40 @@ func lobby() (bool, net.Conn) {
 
 	if input == 1 {
 		_, err := fmt.Fprintf(conn, "wait\n")
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 		var token string
 		_, err = fmt.Fscan(conn, &token)
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 		fmt.Printf("You token is:%s\n", token)
 		fmt.Println("waiting for a friend to connect...")
 	} else if input == 2 {
 		_, err := fmt.Fprintf(conn, "connect\n")
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 		var token string
 		fmt.Printf("Enter friend token\n")
 		fmt.Scan(&token)
 		_, err = fmt.Fprintf(conn, "%s\n", token)
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 	} else {
 		fmt.Println("Searhing for opponent...")
 		_, err := fmt.Fprintf(conn, "quick\n")
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 	}
 
 	var msg string
 	_, err = fmt.Fscan(conn, &msg)
-	if err != nil{
-			panic(err)
+	if err != nil {
+		panic(err)
 	}
 	if msg == "second" {
 		waiting = true
