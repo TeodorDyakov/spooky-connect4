@@ -76,7 +76,10 @@ func (g *Game) Update() error {
 	
 	if press && !lastFrameClick && !gameOver && !waiting{
        mouseX, _ := ebiten.CursorPosition()
-       c <- col(mouseX)	
+       select{
+   		case c <- col(mouseX):
+   		default:
+   		}	
     }
     if press{
 		lastFrameClick = true
