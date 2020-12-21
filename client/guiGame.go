@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strconv"
 	"net"
+	"os"
     "image/color"   
 )
 
@@ -34,7 +35,7 @@ func init() {
 		log.Fatal(err)
 	}
 	h, _ := boardImage.Size()
-	tileHeight = (float64(h))/7.0
+	tileHeight = (float64(h)) / 7.0
 
 	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
@@ -63,39 +64,30 @@ const (
 	SECONDS_TO_MAKE_TURN = 60
 )
 
-var lastFrameClick bool = false
 var gameOver bool = false
 var waiting bool = false
 var playerOneWin bool = false
 var gameStarted bool
-
-var c chan int = make(chan int, 1)
+var frameCount int = 0
+var mouseClickBuffer chan int = make(chan int, 1)
+var b *Board = NewBoard()
 
 func (g *Game) Update() error {
 	press := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	
-	if press && !lastFrameClick && !gameOver && !waiting{
+	if press && !gameOver && !waiting{
        mouseX, _ := ebiten.CursorPosition()
        select{
-   		case c <- col(mouseX):
+   		case mouseClickBuffer <- col(mouseX):
    		default:
    		}	
     }
-    if press{
-		lastFrameClick = true
-	}else{
-		lastFrameClick = false
-	}
     return nil
 }
-
-var cnt int
 
 func col(x int) int {
 	return int(float64(x-10)/tileHeight) 
 }
-
-var b *Board = NewBoard()
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string
@@ -112,7 +104,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else{
 		msg = "opponent turn"
 	}
+	if !gameOver {
+		frameCount++
+	}
+	if(frameCount == 3600){
+		os.Exit(1)
+	}
 	text.Draw(screen, msg, mplusNormalFont, 200, 450, color.White)
+	text.Draw(screen, strconv.Itoa(60 - frameCount/60) + "s", mplusNormalFont, 100, 450, color.White)
 	screen.DrawImage(boardImage, nil)
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -144,6 +143,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func playAgainstAi(){
 	boardCopy := NewBoard()
+	readyToStartGui <- 1
 	for !b.gameOver(){
 		if waiting {
 			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 12)
@@ -151,26 +151,26 @@ func playAgainstAi(){
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
 			waiting = false
 		} else {
-			var column int
-			column = <- c
+			column := <- mouseClickBuffer
 			if !b.drop(column, PLAYER_ONE_COLOR) {
 			} else {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
 				waiting = true
+				frameCount = 0
 			}
 		}
-		gameOver = true
-		if b.areFourConnected(PLAYER_ONE_COLOR) {
-		playerOneWin = true
-		} else if b.areFourConnected(PLAYER_TWO_COLOR) {
-			playerOneWin =false
-		} else {
-			// fmt.Println("Tie")
-		}
+	}
+	gameOver = true
+	if b.areFourConnected(PLAYER_ONE_COLOR) {
+	playerOneWin = true
+	} else if b.areFourConnected(PLAYER_TWO_COLOR) {
+		playerOneWin = false
+	} else {
+		// fmt.Println("Tie")
 	}
 }
 
-var c1 chan int = make(chan int, 1)
+var readyToStartGui chan int = make(chan int, 1)
 
 func playMultiplayer(){
 	var conn net.Conn
@@ -187,7 +187,7 @@ func playMultiplayer(){
 		opponentColor = PLAYER_TWO_COLOR
 	}
 	gameStarted = true
-	c1 <- 1
+	readyToStartGui <- 1
 	for !b.gameOver() {
 
 		if waiting {
@@ -205,10 +205,12 @@ func playMultiplayer(){
 			}
 			column, _ := strconv.Atoi(msg)
 			b.drop(column, opponentColor)
+			frameCount = 0
 			waiting = false
 		} else {
-				column := <- c
+				column := <- mouseClickBuffer
 				if b.drop(column, color) {
+					frameCount = 0
 					waiting = true
 				_, err := fmt.Fprintf(conn, "%d\n", column)
 				if err != nil{
@@ -232,10 +234,24 @@ func main() {
 	ebiten.SetWindowSize(490, 480)
 	ebiten.SetWindowTitle("Render an image")
 
-	// boardCopy := NewBoard()
-				
-	go playMultiplayer()
-	<-c1
+	fmt.Println("Hello! Welcome to connect four CMD!\n" +
+		"To enter multiplayer lobby press [1]\n" + "To play against AI press [2]\n")
+
+	var option string
+	fmt.Scan(&option)
+
+	for !(option == "1" || option == "2") {
+		fmt.Println("Unknown command! Try again:")
+		fmt.Scan(&option)
+	}
+
+	if option == "2" {
+		go playAgainstAi()
+	} else {
+		go playMultiplayer()
+	}
+	
+	<-readyToStartGui
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
