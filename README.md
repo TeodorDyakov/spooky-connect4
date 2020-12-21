@@ -1,6 +1,6 @@
 # Connect four multiplayer server
 Go course at FMI
-This is an implementation of the "Connect four" game, made for the "Introduxction to Go" course at FMI.
+This is an implementation of the "Connect four" game, made for the "Introduction to Go" course at FMI.
 There is a server, a client with both GUI and terminal input, and you can play against a friend or AI.  
 The server can hadle many concurrent games as each game is in its own gorutine.  
 There are two modes of online play:  
