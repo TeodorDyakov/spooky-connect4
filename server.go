@@ -141,8 +141,14 @@ func makeMove(from, to net.Conn) bool {
 	c := make(chan bool)
 
 	go func() {
-		fmt.Fscan(from, &msg)
-		fmt.Fprintf(to, "%s\n", msg)
+		_, err := fmt.Fscan(from, &msg)
+		if err != nil{
+			c<- false
+		}
+		_, err = fmt.Fprintf(to, "%s\n", msg)
+		if err != nil{
+			c<- false
+		}
 		if msg == "end" {
 			c <- false
 		} else {
@@ -179,6 +185,7 @@ func startGame(conn1, conn2 net.Conn) {
 		return	
 	}
 	for {
+		fmt.Println("debug")
 		if !makeMove(conn1, conn2) {
 			fmt.Fprintf(conn1, "timeout\n")
 			fmt.Fprintf(conn2, "timeout\n")
