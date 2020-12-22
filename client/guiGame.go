@@ -142,7 +142,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, tileOffset+float64(y)*tileHeight)
 	}else{
 		fallY += fallSpeed
-		fallSpeed += 1
+		fallSpeed += 2
 		if(fallY > destY){
 			fallY = destY
 			fallSpeed = 0
