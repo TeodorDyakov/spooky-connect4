@@ -69,16 +69,15 @@ func (b *Board) drop(column int, player string) bool {
 	}
 	return false
 }
-
-func (b *Board) areFourConnected(player string) bool {
-	// horizontalCheck
+	
+func (b *Board) whereConnected(player string)(bool, int, int, int){
 	for j := 0; j < len(b.board[0])-3; j++ {
 		for i := 0; i < len(b.board); i++ {
 			if b.board[i][j] == player &&
 				b.board[i][j+1] == player &&
 				b.board[i][j+2] == player &&
 				b.board[i][j+3] == player {
-				return true
+				return true, i, j, 0
 			}
 		}
 	}
@@ -89,7 +88,7 @@ func (b *Board) areFourConnected(player string) bool {
 				b.board[i+1][j] == player &&
 				b.board[i+2][j] == player &&
 				b.board[i+3][j] == player {
-				return true
+				return true, i, j, 1
 			}
 		}
 	}
@@ -100,7 +99,7 @@ func (b *Board) areFourConnected(player string) bool {
 				b.board[i-1][j+1] == player &&
 				b.board[i-2][j+2] == player &&
 				b.board[i-3][j+3] == player {
-				return true
+				return true, i, j, 2
 			}
 		}
 	}
@@ -111,9 +110,14 @@ func (b *Board) areFourConnected(player string) bool {
 				b.board[i-1][j-1] == player &&
 				b.board[i-2][j-2] == player &&
 				b.board[i-3][j-3] == player {
-				return true
+				return true, i, j, 3
 			}
 		}
 	}
-	return false
+	return false, -1, -1, -1
+}
+
+func (b *Board) areFourConnected(player string) bool {
+	connected, _, _, _ := b.whereConnected(player)
+	return connected
 }
