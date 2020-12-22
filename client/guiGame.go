@@ -22,7 +22,7 @@ var yellow *ebiten.Image
 
 func init() {
 	var err error
-	boardImage, _, err = ebitenutil.NewImageFromFile("images/con4.png")
+	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,8 +34,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	h, _ := boardImage.Size()
-	tileHeight = (float64(h)) / 7.0
+	// h, _ := boardImage.Size()
+	tileHeight = 65
 
 	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
@@ -43,7 +43,7 @@ func init() {
 	}
 	const dpi = 72
 	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    24,
+		Size:    30,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})
@@ -70,18 +70,24 @@ var waiting bool = false
 var playerOneWin bool = false
 var gameStarted bool
 var frameCount int = 0
-var mouseClickBuffer chan int = make(chan int, 1)
+var lastFrameClicked bool
+var mouseClickBuffer chan int = make(chan int)
 var b *Board = NewBoard()
 
 func (g *Game) Update() error {
 	press := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 
-	if press && !gameOver && !waiting {
+	if !press && !gameOver && !waiting && lastFrameClicked{
 		mouseX, _ := ebiten.CursorPosition()
 		select {
 		case mouseClickBuffer <- col(mouseX):
 		default:
 		}
+	}
+	if press {
+		lastFrameClicked = true
+	}else {
+		lastFrameClicked = false
 	}
 	return nil
 }
@@ -111,9 +117,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if frameCount == 3600 {
 		os.Exit(1)
 	}
-	text.Draw(screen, msg, mplusNormalFont, 200, 450, color.White)
-	text.Draw(screen, strconv.Itoa(60-frameCount/60)+"s", mplusNormalFont, 100, 450, color.White)
 	screen.DrawImage(boardImage, nil)
+	text.Draw(screen, msg, mplusNormalFont, 480, 350, color.White)
+	text.Draw(screen, strconv.Itoa(60-frameCount/60)+"s", mplusNormalFont, 480, 380, color.White)
+
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
 			if b.board[i][j] == PLAYER_TWO_COLOR {
@@ -139,23 +146,25 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 490, 480
+	return 630, 440
 }
 
 func playAgainstAi() {
 	boardCopy := NewBoard()
+	gameStarted = true
+
 	readyToStartGui <- 1
 	for !b.gameOver() {
 		if waiting {
-			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 12)
+			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 10)
 			b.drop(bestMove, PLAYER_TWO_COLOR)
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
 			waiting = false
 		} else {
 			column := <-mouseClickBuffer
-			if !b.drop(column, PLAYER_ONE_COLOR) {
-			} else {
+			if b.drop(column, PLAYER_ONE_COLOR) {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
+							// time.Sleep(1 * time.Second)
 				waiting = true
 				frameCount = 0
 			}
@@ -232,7 +241,7 @@ func playMultiplayer() {
 }
 
 func main() {
-	ebiten.SetWindowSize(490, 480)
+	ebiten.SetWindowSize(626, 417)
 	ebiten.SetWindowTitle("Render an image")
 
 	fmt.Println("Hello! Welcome to connect four CMD!\n" +
