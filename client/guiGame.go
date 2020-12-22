@@ -41,7 +41,7 @@ func init() {
 	}
 	const dpi = 72
 	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    30,
+		Size:    24,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})
@@ -110,7 +110,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if !waiting {
 		msg = "your turn"
 	} else {
-		msg = "opponent turn"
+		msg = "other's turn"
 	}
 	if !gameOver {
 		frameCount++
