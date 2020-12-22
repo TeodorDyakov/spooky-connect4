@@ -118,8 +118,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		os.Exit(1)
 	}
 	screen.DrawImage(boardImage, nil)
-	text.Draw(screen, msg, mplusNormalFont, 480, 350, color.White)
-	text.Draw(screen, strconv.Itoa(60-frameCount/60)+"s", mplusNormalFont, 480, 380, color.White)
+	text.Draw(screen, msg, mplusNormalFont, 470, 350, color.White)
+	text.Draw(screen, strconv.Itoa(60-frameCount/60)+"s", mplusNormalFont, 470, 380, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
