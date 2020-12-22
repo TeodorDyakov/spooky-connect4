@@ -10,6 +10,7 @@ import (
 	"golang.org/x/image/font/opentype"
 	"image/color"
 	_ "image/png"
+	"time"
 	"log"
 	"net"
 	"os"
@@ -34,9 +35,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// h, _ := boardImage.Size()
-	tileHeight = 65
-
 	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
 		log.Fatal(err)
@@ -51,10 +49,9 @@ func init() {
 
 type Game struct{}
 
-var tileHeight float64
-var mplusNormalFont font.Face
-
 const (
+	tileHeight = 65
+	tileOffset = 10
 	CONN_HOST            = "localhost"
 	CONN_PORT            = "12345"
 	CONN_TYPE            = "tcp"
@@ -65,6 +62,10 @@ const (
 	SECONDS_TO_MAKE_TURN = 60
 )
 
+var animateCol int
+var fallY float64
+var fallSpeed float64 = 5
+var mplusNormalFont font.Face
 var gameOver bool = false
 var waiting bool = false
 var playerOneWin bool = false
@@ -93,7 +94,7 @@ func (g *Game) Update() error {
 }
 
 func col(x int) int {
-	return int(float64(x-10) / tileHeight)
+	return int(float64(x-tileOffset) / tileHeight)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -132,12 +133,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
+var animated[7][6]bool
+
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-
-	// var tileWidth float64 = (float64(h))/7.0
-	op.GeoM.Translate(10+float64(x)*tileHeight, 10+float64(y)*tileHeight)
-	// op.GeoM.Translate(screenWidth/2, screenHeight/2)
+	destY := tileOffset+float64(y)*tileHeight
+	if animated[x][y]{
+		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, tileOffset+float64(y)*tileHeight)
+	}else{
+		fallY += fallSpeed
+		fallSpeed += 1
+		if(fallY > destY){
+			fallY = destY
+			fallSpeed = 0
+			animated[x][y] = true
+		}
+		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, fallY)
+		if animated[x][y]{
+			fallY = 0
+		}
+	}
 	if player == PLAYER_TWO_COLOR {
 		screen.DrawImage(red, op)
 	} else {
@@ -156,15 +171,16 @@ func playAgainstAi() {
 	readyToStartGui <- 1
 	for !b.gameOver() {
 		if waiting {
-			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 10)
+			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, 9)
 			b.drop(bestMove, PLAYER_TWO_COLOR)
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
+			time.Sleep(1 * time.Second)
 			waiting = false
 		} else {
 			column := <-mouseClickBuffer
 			if b.drop(column, PLAYER_ONE_COLOR) {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
-							// time.Sleep(1 * time.Second)
+				time.Sleep(1 * time.Second)
 				waiting = true
 				frameCount = 0
 			}
@@ -201,8 +217,6 @@ func playMultiplayer() {
 	for !b.gameOver() {
 
 		if waiting {
-			// fmt.Println("waiting for oponent move...\n")
-
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
 			if err != nil {
@@ -215,12 +229,14 @@ func playMultiplayer() {
 			}
 			column, _ := strconv.Atoi(msg)
 			b.drop(column, opponentColor)
+			time.Sleep(1 * time.Second)
 			frameCount = 0
 			waiting = false
 		} else {
 			column := <-mouseClickBuffer
 			if b.drop(column, color) {
 				frameCount = 0
+				time.Sleep(1 * time.Second)
 				waiting = true
 				_, err := fmt.Fprintf(conn, "%d\n", column)
 				if err != nil {
@@ -245,7 +261,7 @@ func main() {
 	ebiten.SetWindowTitle("Render an image")
 
 	fmt.Println("Hello! Welcome to connect four CMD!\n" +
-		"To enter multiplayer lobby press [1]\n" + "To play against AI press [2]\n")
+		"To enter multiplayer lobby press [1]\n" + "To play against AI press [2]")
 
 	var option string
 	fmt.Scan(&option)
