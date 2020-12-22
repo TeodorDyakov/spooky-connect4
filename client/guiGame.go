@@ -10,11 +10,11 @@ import (
 	"golang.org/x/image/font/opentype"
 	"image/color"
 	_ "image/png"
-	"time"
 	"log"
 	"net"
 	"os"
 	"strconv"
+	"time"
 )
 
 var boardImage *ebiten.Image
@@ -50,8 +50,8 @@ func init() {
 type Game struct{}
 
 const (
-	tileHeight = 65
-	tileOffset = 10
+	tileHeight           = 65
+	tileOffset           = 10
 	CONN_HOST            = "localhost"
 	CONN_PORT            = "12345"
 	CONN_TYPE            = "tcp"
@@ -60,6 +60,7 @@ const (
 	MIN_DIFFICULTY       = 1
 	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 60
+	gravity              = 2
 )
 
 var animateCol int
@@ -78,7 +79,7 @@ var b *Board = NewBoard()
 func (g *Game) Update() error {
 	press := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 
-	if !press && !gameOver && !waiting && lastFrameClicked{
+	if !press && !gameOver && !waiting && lastFrameClicked {
 		mouseX, _ := ebiten.CursorPosition()
 		select {
 		case mouseClickBuffer <- col(mouseX):
@@ -87,7 +88,7 @@ func (g *Game) Update() error {
 	}
 	if press {
 		lastFrameClicked = true
-	}else {
+	} else {
 		lastFrameClicked = false
 	}
 	return nil
@@ -133,23 +134,23 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-var animated[7][6]bool
+var animated [7][6]bool
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	destY := tileOffset+float64(y)*tileHeight
-	if animated[x][y]{
+	destY := tileOffset + float64(y)*tileHeight
+	if animated[x][y] {
 		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, tileOffset+float64(y)*tileHeight)
-	}else{
+	} else {
 		fallY += fallSpeed
-		fallSpeed += 2
-		if(fallY > destY){
+		fallSpeed += gravity
+		if fallY > destY {
 			fallY = destY
 			fallSpeed = 0
 			animated[x][y] = true
 		}
 		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, fallY)
-		if animated[x][y]{
+		if animated[x][y] {
 			fallY = 0
 		}
 	}
