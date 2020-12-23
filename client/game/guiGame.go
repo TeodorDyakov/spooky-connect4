@@ -52,12 +52,18 @@ func init() {
 
 type Game struct{}
 
+type GameState int
+
 const (
-	yourTurn             = 0
+	yourTurn GameState   = 0
 	waiting              = 1
 	win                  = 2
 	lose                 = 3
 	tie                  = 4
+)
+
+const (
+	
 	tileHeight           = 65
 	tileOffset           = 10
 	CONN_HOST            = "localhost"
