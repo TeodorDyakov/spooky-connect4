@@ -63,21 +63,20 @@ const (
 )
 
 const (
-	
-	tileHeight           = 65
-	tileOffset           = 10
-	CONN_HOST            = "localhost"
-	CONN_PORT            = "12345"
-	CONN_TYPE            = "tcp"
-	PLAYER_ONE_COLOR     = "◯"
-	PLAYER_TWO_COLOR     = "⬤"
 	MIN_DIFFICULTY       = 1
 	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 59
 	fps                  = 60
-	gravity              = 0.5
+	tileHeight           = 65
+	tileOffset           = 10
 	boardX               = 84
 	boardY               = 100
+	gravity              = 0.5
+	PLAYER_ONE_COLOR     = "◯"
+	PLAYER_TWO_COLOR     = "⬤"
+	CONN_TYPE            = "tcp"
+	CONN_PORT            = "12345"
+	CONN_HOST            = "localhost"
 )
 
 var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
