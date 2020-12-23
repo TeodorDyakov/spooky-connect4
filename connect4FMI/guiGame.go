@@ -1,4 +1,4 @@
-package main
+package connect4FMI
 
 import (
 	"fmt"
@@ -283,7 +283,7 @@ func playMultiplayer() {
 	}
 }
 
-func main() {
+func startGuiGame(){
 	ebiten.SetWindowSize(626, 417)
 	ebiten.SetWindowTitle("Render an image")
 
@@ -306,5 +306,4 @@ func main() {
 
 	<-readyToStartGui
 	ebiten.RunGame(&Game{})
-
 }
