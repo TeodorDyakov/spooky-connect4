@@ -52,14 +52,14 @@ const (
 	gravity              = 1
 )
 
-var fallY float64 = 0
+var fallY float64
 var fallSpeed float64 = 5
 var mplusNormalFont font.Face
-var gameOver bool = false
-var waiting bool = false
-var playerOneWin bool = false
-var gameStarted bool = false
-var frameCount int = 0
+var gameOver bool
+var waiting bool
+var playerOneWin bool
+var gameStarted bool
+var frameCount int
 var lastFrameClicked bool
 var aiDifficulty int
 var mouseClickBuffer chan int = make(chan int)
