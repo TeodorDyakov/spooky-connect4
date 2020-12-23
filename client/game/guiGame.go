@@ -16,6 +16,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"log"
 )
 
 var boardImage *ebiten.Image
@@ -23,9 +24,19 @@ var red *ebiten.Image
 var yellow *ebiten.Image
 
 func init() {
-	boardImage, _, _ = ebitenutil.NewImageFromFile("images/conn4.jpeg")
-	red, _, _ = ebitenutil.NewImageFromFile("images/red.png")
-	yellow, _, _ = ebitenutil.NewImageFromFile("images/yellow.png")
+	var err error
+	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4.jpeg")
+	if err != nil {
+		log.Fatal(err)
+	}
+	red, _, err = ebitenutil.NewImageFromFile("images/red.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	yellow, _, err = ebitenutil.NewImageFromFile("images/yellow.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	const dpi = 72
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
