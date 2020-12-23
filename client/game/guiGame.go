@@ -12,11 +12,11 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 	"net"
 	"os"
 	"strconv"
 	"time"
-	"log"
 )
 
 var boardImage *ebiten.Image
@@ -43,10 +43,9 @@ func init() {
 		log.Fatal(err)
 	}
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
-	const dpi = 72
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    24,
-		DPI:     dpi,
+		DPI:     72,
 		Hinting: font.HintingFull,
 	})
 }
@@ -54,6 +53,11 @@ func init() {
 type Game struct{}
 
 const (
+	yourTurn             = 0
+	waiting              = 1
+	win                  = 2
+	lose                 = 3
+	tie                  = 4
 	tileHeight           = 65
 	tileOffset           = 10
 	CONN_HOST            = "localhost"
@@ -65,20 +69,17 @@ const (
 	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 59
 	fps                  = 60
-	gravity              = 1
+	gravity              = 0.5
 	boardX               = 84
 	boardY               = 100
 )
 
+var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
+var gameState int
 var fallY float64
 var fallSpeed float64 = 5
 var mplusNormalFont font.Face
-var gameOver bool
-var waiting bool
-var playerOneWin bool
-var gameStarted bool
 var frameCount int
-var lastFrameClicked bool
 var aiDifficulty int
 var mouseClickBuffer chan int = make(chan int)
 var readyToStartGui chan int = make(chan int)
@@ -89,60 +90,42 @@ var playingAgainstAi bool
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
 
-	if !press && !gameOver && !waiting && lastFrameClicked {
+	if press {
 		mouseX, _ := ebiten.CursorPosition()
+		/*
+			only send click event to buffer if someone is waiting for it
+		*/
 		select {
 		case mouseClickBuffer <- col(mouseX):
 		default:
 		}
 	}
-	if gameOver && playingAgainstAi {
-		if !press && !lastFrameClicked {
-			mouseX, mouseY := ebiten.CursorPosition()
-			if mouseX >= 230 && mouseX <= 600 && mouseY >= 500{
-				resetGameState()
-				go aiGame(aiDifficulty)
-			}
+	if isGameOver() && playingAgainstAi && press {
+		mouseX, mouseY := ebiten.CursorPosition()
+		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
+			resetGameState()
+			go aiGame(aiDifficulty)
 		}
 	}
-	if press {
-		lastFrameClicked = true
-	} else {
-		lastFrameClicked = false
-	}
-
 	return nil
 }
 
-func col(x int) int {
-	return int(float64(x - tileOffset - boardX) / tileHeight)
+func isGameOver() bool {
+	return gameState == tie || gameState == win || gameState == lose
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	var msg string
-	if !gameStarted {
-		msg = "waiting"
-	} else if gameOver {
-		if playerOneWin {
-			msg = "you win :D"
-		} else {
-			msg = "you lose :("
-		}
-	} else if !waiting {
-		msg = "your turn"
-	} else {
-		msg = "other's turn"
-	}
-	if !gameOver {
+	var msg string = messages[gameState]
+
+	if gameState == yourTurn || gameState == waiting{
 		frameCount++
 	}
+
 	if frameCount == fps*SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(boardX, boardY)
-	screen.DrawImage(boardImage, op)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
 
@@ -155,25 +138,19 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
-	if gameOver {
+	op.GeoM.Translate(boardX, boardY)
+	screen.DrawImage(boardImage, op)
+	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 230, 580, color.White)
 	}
 }
 
-func resetGameState() {
-	var arr [7][6]bool
-	animated = arr
-	gameOver = false
-	playerOneWin = false
-	b = NewBoard()
-}
-
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(boardX, boardY)
+	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
 	if animated[x][y] {
-		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, tileOffset+float64(y)*tileHeight)
+		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
 	} else {
 		fallY += fallSpeed
 		fallSpeed += gravity
@@ -182,7 +159,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 			fallSpeed = 0
 			animated[x][y] = true
 		}
-		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, fallY)
+		op.GeoM.Translate(float64(x)*tileHeight, fallY)
 		if animated[x][y] {
 			fallY = 0
 		}
@@ -198,32 +175,42 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 640, 640
 }
 
+func resetGameState() {
+	var arr [7][6]bool
+	animated = arr
+	gameState = waiting
+	b = NewBoard()
+}
+
+func col(x int) int {
+	return int(float64(x-tileOffset-boardX) / tileHeight)
+}
+
 func aiGame(difficulty int) {
 	boardCopy := NewBoard()
 	for !b.gameOver() {
-		if waiting {
+		if gameState == waiting {
 			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
 			b.drop(bestMove, PLAYER_TWO_COLOR)
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
 			time.Sleep(1 * time.Second)
-			waiting = false
-		} else {
+			gameState = yourTurn
+		} else if gameState == yourTurn {
 			column := <-mouseClickBuffer
 			if b.drop(column, PLAYER_ONE_COLOR) {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
 				time.Sleep(1 * time.Second)
-				waiting = true
-				frameCount = 0
+				gameState = waiting
 			}
 		}
 	}
-	gameOver = true
+
 	if b.areFourConnected(PLAYER_ONE_COLOR) {
-		playerOneWin = true
+		gameState = win
 	} else if b.areFourConnected(PLAYER_TWO_COLOR) {
-		playerOneWin = false
+		gameState = lose
 	} else {
-		// fmt.Println("Tie")
+		gameState = tie
 	}
 }
 
@@ -242,7 +229,6 @@ func playAgainstAi() {
 	readyToStartGui <- 1
 	aiDifficulty = difficulty
 	playingAgainstAi = true
-	gameStarted = true
 	aiGame(difficulty)
 }
 
@@ -250,22 +236,25 @@ func playMultiplayer() {
 	var conn net.Conn
 	var color string
 	var opponentColor string
+	var wait bool
+	wait, conn = lobby()
 
-	waiting, conn = lobby()
-
-	if waiting {
+	if wait {
 		color = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
 	} else {
 		color = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
 	}
-
+	if wait {
+		gameState = waiting
+	} else {
+		gameState = yourTurn
+	}
 	readyToStartGui <- 1
-	gameStarted = true
 
 	for !b.gameOver() {
-		if waiting {
+		if gameState == waiting {
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
 			if err != nil {
@@ -280,12 +269,12 @@ func playMultiplayer() {
 			b.drop(column, opponentColor)
 			time.Sleep(1 * time.Second)
 			frameCount = 0
-			waiting = false
-		} else {
+			gameState = yourTurn
+		} else if gameState == yourTurn {
 			column := <-mouseClickBuffer
 			if b.drop(column, color) {
 				frameCount = 0
-				waiting = true
+				gameState = waiting
 				_, err := fmt.Fprintf(conn, "%d\n", column)
 				if err != nil {
 					panic(err)
@@ -294,20 +283,19 @@ func playMultiplayer() {
 			}
 		}
 	}
-	gameOver = true
 	fmt.Fprintf(conn, "end")
 	if b.areFourConnected(color) {
-		playerOneWin = true
+		gameState = win
 	} else if b.areFourConnected(opponentColor) {
-		playerOneWin = false
+		gameState = lose
 	} else {
-
+		gameState = tie
 	}
 }
 
-func StartGuiGame(){
+func StartGuiGame() {
 	ebiten.SetWindowSize(640, 640)
-	ebiten.SetWindowTitle("Render an image")
+	ebiten.SetWindowTitle("Connect four")
 
 	fmt.Println("Hello! Welcome to connect four CMD!\n" +
 		"To enter multiplayer lobby press [1]\n" + "To play against AI press [2]")
