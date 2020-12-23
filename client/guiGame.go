@@ -81,8 +81,8 @@ func (g *Game) Update() error {
 	if gameOver && playingAgainstAi {
 		if !press && !lastFrameClicked {
 			mouseX, mouseY := ebiten.CursorPosition()
-			if mouseX >= 470 && mouseX <= 600 && mouseY >= 290 && mouseY <= 350 {
-				go resetGameState()
+			if mouseX >= 470 && mouseX <= 600 && mouseY >= 10 && mouseY <= 200 {
+				resetGameState()
 				go aiGame(aiDifficulty)
 			}
 		}
@@ -135,7 +135,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	if gameOver {
-		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 290, color.White)
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 40, color.White)
 	}
 }
 
