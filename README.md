@@ -13,8 +13,5 @@ First install dependencies for Ebiten
 sudo apt install libc6-dev libglu1-mesa-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
 
 cd client
-./gameTerminal.sh 
-or 
-./gameGUI.sh
-```
+go run main.go
 
