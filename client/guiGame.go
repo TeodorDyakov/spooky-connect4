@@ -22,45 +22,12 @@ import (
 var boardImage *ebiten.Image
 var red *ebiten.Image
 var yellow *ebiten.Image
-var lineV *ebiten.Image
-var lineH *ebiten.Image
-var lineU *ebiten.Image
-var lineD *ebiten.Image
 
 func init() {
-	var err error
-	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4.jpeg")
-	if err != nil {
-		log.Fatal(err)
-	}
-	red, _, err = ebitenutil.NewImageFromFile("images/red.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	yellow, _, err = ebitenutil.NewImageFromFile("images/yellow.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// lineH, _, err = ebitenutil.NewImageFromFile("images/lineH.png")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// lineV, _, err = ebitenutil.NewImageFromFile("images/lineV.png")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// lineD, _, err = ebitenutil.NewImageFromFile("images/lineD.png")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// lineU, _, err = ebitenutil.NewImageFromFile("images/lineU.png")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	boardImage, _, _ = ebitenutil.NewImageFromFile("images/conn4.jpeg")
+	red, _, _ = ebitenutil.NewImageFromFile("images/red.png")
+	yellow, _, _ = ebitenutil.NewImageFromFile("images/yellow.png")
+	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	const dpi = 72
 	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    24,
@@ -81,7 +48,7 @@ const (
 	PLAYER_TWO_COLOR     = "⬤"
 	MIN_DIFFICULTY       = 1
 	MAX_DIFFICULTY       = 12
-	SECONDS_TO_MAKE_TURN = 60
+	SECONDS_TO_MAKE_TURN = 59
 	fps                  = 60
 	gravity              = 1
 )
@@ -95,9 +62,13 @@ var playerOneWin bool = false
 var gameStarted bool = false
 var frameCount int = 0
 var lastFrameClicked bool
-
+var aiDifficulty int
 var mouseClickBuffer chan int = make(chan int)
+var readyToStartGui chan int = make(chan int)
 var b *Board = NewBoard()
+var animated [7][6]bool
+var playingAgainstAi bool
+// var conn net.Conn
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -109,11 +80,21 @@ func (g *Game) Update() error {
 		default:
 		}
 	}
+	if gameOver && playAgainstAi{
+		if !press && !lastFrameClicked{
+			mouseX, mouseY := ebiten.CursorPosition()
+			if mouseX >= 470 && mouseX <= 600 && mouseY >= 290 && mouseY <= 350{
+				go resetGameState()
+				go aiGame(aiDifficulty)
+			}
+		}		
+	}
 	if press {
 		lastFrameClicked = true
 	} else {
 		lastFrameClicked = false
 	}
+
 	return nil
 }
 
@@ -144,7 +125,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	screen.DrawImage(boardImage, nil)
 	text.Draw(screen, msg, mplusNormalFont, 470, 350, color.White)
-	text.Draw(screen, strconv.Itoa(SECONDS_TO_MAKE_TURN - frameCount/fps)+"s", mplusNormalFont, 470, 380, color.White)
+	text.Draw(screen, "00:" + strconv.Itoa(SECONDS_TO_MAKE_TURN - frameCount/fps), mplusNormalFont, 470, 380, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -155,26 +136,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
-	// if(gameOver){
-	// 	con, y, x, lineType := b.whereConnected(PLAYER_ONE_COLOR)
-	// 	if !con{
-	// 		con, y, x, lineType = b.whereConnected(PLAYER_ONE_COLOR)
-	// 	}
-	// 	op := &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Translate(tileOffset+float64(x)*tileHeight + 30, tileOffset+float64(y)*tileHeight+30)
-	// 	if lineType == 0{
-	// 		screen.DrawImage(lineH, op)
-	// 	}else if lineType == 1{
-	// 		screen.DrawImage(lineV, op)
-	// 	}else if lineType == 2{
-	// 		screen.DrawImage(lineD, op)
-	// 	}else if lineType == 3{
-	// 		screen.DrawImage(lineU, op)
-	// 	}
-	// }
+	if gameOver {
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 290, color.White)		
+	}
 }
 
-var animated [7][6]bool
+func resetGameState(){
+	var arr[7][6]bool
+	animated = arr
+	gameOver = false
+	playerOneWin = false
+	b = NewBoard()
+}
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
@@ -205,22 +178,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 626, 417
 }
 
-func playAgainstAi() {
-	fmt.Printf("Choose difficulty (number between %d and %d)", MIN_DIFFICULTY, MAX_DIFFICULTY)
-	var option string
-	fmt.Scan(&option)
-
-	difficulty, err := strconv.Atoi(option)
-
-	for err != nil || difficulty < MIN_DIFFICULTY || difficulty > MAX_DIFFICULTY {
-		fmt.Println("Invalid input! Try again:")
-		fmt.Scan(&option)
-		difficulty, err = strconv.Atoi(option)
-	}
+func aiGame(difficulty int){
 	boardCopy := NewBoard()
-	gameStarted = true
-
-	readyToStartGui <- 1
 	for !b.gameOver() {
 		if waiting {
 			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
@@ -248,7 +207,24 @@ func playAgainstAi() {
 	}
 }
 
-var readyToStartGui chan int = make(chan int, 1)
+func playAgainstAi() {
+	fmt.Printf("Choose difficulty (number between %d and %d)", MIN_DIFFICULTY, MAX_DIFFICULTY)
+	var option string
+	fmt.Scan(&option)
+
+	difficulty, err := strconv.Atoi(option)
+
+	for err != nil || difficulty < MIN_DIFFICULTY || difficulty > MAX_DIFFICULTY {
+		fmt.Println("Invalid input! Try again:")
+		fmt.Scan(&option)
+		difficulty, err = strconv.Atoi(option)
+	}
+	readyToStartGui <- 1
+	aiDifficulty = difficulty
+	playAgainstAi = true
+	gameStarted = true
+	aiGame(difficulty)
+}
 
 func playMultiplayer() {
 	var conn net.Conn
@@ -264,10 +240,11 @@ func playMultiplayer() {
 		color = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
 	}
-	gameStarted = true
-	readyToStartGui <- 1
-	for !b.gameOver() {
 
+	readyToStartGui <- 1
+	gameStarted = true
+
+	for !b.gameOver() {
 		if waiting {
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
