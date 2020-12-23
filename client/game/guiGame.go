@@ -283,7 +283,7 @@ func playMultiplayer() {
 	}
 }
 
-func startGuiGame(){
+func StartGuiGame(){
 	ebiten.SetWindowSize(626, 417)
 	ebiten.SetWindowTitle("Render an image")
 
