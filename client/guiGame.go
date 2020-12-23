@@ -12,7 +12,6 @@ import (
 	"image/color"
 	_ "image/png"
 	_ "image/jpeg"
-	"log"
 	"net"
 	"os"
 	"strconv"
@@ -29,7 +28,7 @@ func init() {
 	yellow, _, _ = ebitenutil.NewImageFromFile("images/yellow.png")
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	const dpi = 72
-	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    24,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
@@ -68,7 +67,6 @@ var readyToStartGui chan int = make(chan int)
 var b *Board = NewBoard()
 var animated [7][6]bool
 var playingAgainstAi bool
-// var conn net.Conn
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -80,7 +78,7 @@ func (g *Game) Update() error {
 		default:
 		}
 	}
-	if gameOver && playAgainstAi{
+	if gameOver && playingAgainstAi{
 		if !press && !lastFrameClicked{
 			mouseX, mouseY := ebiten.CursorPosition()
 			if mouseX >= 470 && mouseX <= 600 && mouseY >= 290 && mouseY <= 350{
@@ -221,7 +219,7 @@ func playAgainstAi() {
 	}
 	readyToStartGui <- 1
 	aiDifficulty = difficulty
-	playAgainstAi = true
+	playingAgainstAi = true
 	gameStarted = true
 	aiGame(difficulty)
 }

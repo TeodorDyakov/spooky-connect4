@@ -31,7 +31,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 		value = SMALL
 		for _, column := range shuffledColumns {
 			if b.drop(column, PLAYER_TWO_COLOR) {
-				new_score, _ := alphabeta(b, false, depth+1, alpha, beta, max_depth)
+				new_score, _ := alphabeta(b, false, depth + 1, alpha, beta, max_depth)
 				b.undoDrop(column)
 
 				if value < new_score {
