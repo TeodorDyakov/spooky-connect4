@@ -22,10 +22,15 @@ import (
 var boardImage *ebiten.Image
 var red *ebiten.Image
 var yellow *ebiten.Image
+var bg *ebiten.Image
 
 func init() {
 	var err error
-	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4.jpeg")
+	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4trans.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	bg, _, err = ebitenutil.NewImageFromFile("images/bg2.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,6 +66,8 @@ const (
 	SECONDS_TO_MAKE_TURN = 59
 	fps                  = 60
 	gravity              = 1
+	boardX               = 84
+	boardY               = 100
 )
 
 var fallY float64
@@ -92,7 +99,7 @@ func (g *Game) Update() error {
 	if gameOver && playingAgainstAi {
 		if !press && !lastFrameClicked {
 			mouseX, mouseY := ebiten.CursorPosition()
-			if mouseX >= 470 && mouseX <= 600 && mouseY >= 10 && mouseY <= 200 {
+			if mouseX >= 230 && mouseX <= 600 && mouseY >= 500{
 				resetGameState()
 				go aiGame(aiDifficulty)
 			}
@@ -108,7 +115,7 @@ func (g *Game) Update() error {
 }
 
 func col(x int) int {
-	return int(float64(x-tileOffset) / tileHeight)
+	return int(float64(x - tileOffset - boardX) / tileHeight)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -132,9 +139,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if frameCount == fps*SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
-	screen.DrawImage(boardImage, nil)
-	text.Draw(screen, msg, mplusNormalFont, 470, 350, color.White)
-	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 470, 380, color.White)
+	screen.DrawImage(bg, nil)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(boardX, boardY)
+	screen.DrawImage(boardImage, op)
+	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
+	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -146,7 +156,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	if gameOver {
-		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 40, color.White)
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 230, 580, color.White)
 	}
 }
 
@@ -160,6 +170,7 @@ func resetGameState() {
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(boardX, boardY)
 	destY := tileOffset + float64(y)*tileHeight
 	if animated[x][y] {
 		op.GeoM.Translate(tileOffset+float64(x)*tileHeight, tileOffset+float64(y)*tileHeight)
@@ -184,7 +195,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 626, 417
+	return 640, 640
 }
 
 func aiGame(difficulty int) {
@@ -295,7 +306,7 @@ func playMultiplayer() {
 }
 
 func StartGuiGame(){
-	ebiten.SetWindowSize(626, 417)
+	ebiten.SetWindowSize(640, 640)
 	ebiten.SetWindowTitle("Render an image")
 
 	fmt.Println("Hello! Welcome to connect four CMD!\n" +
