@@ -307,8 +307,6 @@ func main() {
 	}
 
 	<-readyToStartGui
-	if err := ebiten.RunGame(&Game{}); err != nil {
-		log.Fatal(err)
-	}
+	ebiten.RunGame(&Game{})
 
 }
