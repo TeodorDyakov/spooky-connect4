@@ -69,8 +69,8 @@ func (b *Board) drop(column int, player string) bool {
 	}
 	return false
 }
-	
-func (b *Board) whereConnected(player string)(bool, int, int, int){
+
+func (b *Board) whereConnected(player string) (bool, int, int, int) {
 	for j := 0; j < len(b.board[0])-3; j++ {
 		for i := 0; i < len(b.board); i++ {
 			if b.board[i][j] == player &&

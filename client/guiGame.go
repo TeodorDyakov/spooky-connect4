@@ -5,13 +5,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"image/color"
-	_ "image/png"
 	_ "image/jpeg"
+	_ "image/png"
 	"net"
 	"os"
 	"strconv"
@@ -78,14 +78,14 @@ func (g *Game) Update() error {
 		default:
 		}
 	}
-	if gameOver && playingAgainstAi{
-		if !press && !lastFrameClicked{
+	if gameOver && playingAgainstAi {
+		if !press && !lastFrameClicked {
 			mouseX, mouseY := ebiten.CursorPosition()
-			if mouseX >= 470 && mouseX <= 600 && mouseY >= 290 && mouseY <= 350{
+			if mouseX >= 470 && mouseX <= 600 && mouseY >= 290 && mouseY <= 350 {
 				go resetGameState()
 				go aiGame(aiDifficulty)
 			}
-		}		
+		}
 	}
 	if press {
 		lastFrameClicked = true
@@ -97,7 +97,7 @@ func (g *Game) Update() error {
 }
 
 func col(x int) int {
-	return int(float64(x - tileOffset) / tileHeight)
+	return int(float64(x-tileOffset) / tileHeight)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -118,12 +118,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if !gameOver {
 		frameCount++
 	}
-	if frameCount == fps * SECONDS_TO_MAKE_TURN {
+	if frameCount == fps*SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
 	screen.DrawImage(boardImage, nil)
 	text.Draw(screen, msg, mplusNormalFont, 470, 350, color.White)
-	text.Draw(screen, "00:" + strconv.Itoa(SECONDS_TO_MAKE_TURN - frameCount/fps), mplusNormalFont, 470, 380, color.White)
+	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 470, 380, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -135,12 +135,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	if gameOver {
-		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 290, color.White)		
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 470, 290, color.White)
 	}
 }
 
-func resetGameState(){
-	var arr[7][6]bool
+func resetGameState() {
+	var arr [7][6]bool
 	animated = arr
 	gameOver = false
 	playerOneWin = false
@@ -176,7 +176,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 626, 417
 }
 
-func aiGame(difficulty int){
+func aiGame(difficulty int) {
 	boardCopy := NewBoard()
 	for !b.gameOver() {
 		if waiting {
