@@ -81,7 +81,7 @@ const (
 )
 
 var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
-var gameState int
+var gameState GameState
 var fallY float64
 var fallSpeed float64 = 5
 var mplusNormalFont font.Face
