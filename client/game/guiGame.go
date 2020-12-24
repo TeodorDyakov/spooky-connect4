@@ -85,8 +85,10 @@ var gameState GameState
 var animated [7][6]bool
 var fallSpeed float64
 var b *Board = NewBoard()
+var again chan bool = make(chan bool)
 var playingAgainstAi bool
 var mplusNormalFont font.Face
+var wonLast bool
 var fallY float64 = -tileHeight
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
@@ -105,11 +107,18 @@ func (g *Game) Update() error {
 		default:
 		}
 	}
-	if isGameOver() && playingAgainstAi && press {
+	if isGameOver() && press {
 		mouseX, mouseY := ebiten.CursorPosition()
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
 			resetGameState()
-			go aiGame(aiDifficulty)
+			if playingAgainstAi{
+				go playAgainstAi()
+			}else{ 
+				select {
+				case again <- true:
+				default:
+				}
+			}
 		}
 	}
 	return nil
@@ -260,43 +269,56 @@ func playMultiplayer() {
 	}
 	readyToStartGui <- 1
 
-	for !b.gameOver() {
-		if gameState == waiting {
-			var msg string
-			_, err := fmt.Fscan(conn, &msg)
-			if err != nil {
-				panic(err)
-			}
-			if msg == "timeout" || msg == "error" {
-				fmt.Println("opponent disconnected!")
-				panic(nil)
-				return
-			}
-			column, _ := strconv.Atoi(msg)
-			b.drop(column, opponentColor)
-			time.Sleep(1 * time.Second)
-			frameCount = 0
-			gameState = yourTurn
-		} else if gameState == yourTurn {
-			column := <-mouseClickBuffer
-			if b.drop(column, color) {
-				frameCount = 0
-				gameState = waiting
-				_, err := fmt.Fprintf(conn, "%d\n", column)
+	playAgain := true
+	for playAgain {
+		for !b.gameOver() {
+			if gameState == waiting {
+				var msg string
+				_, err := fmt.Fscan(conn, &msg)
 				if err != nil {
 					panic(err)
 				}
+				if msg == "timeout" || msg == "error" {
+					fmt.Println("opponent disconnected!")
+					panic(nil)
+					return
+				}
+				column, _ := strconv.Atoi(msg)
+				b.drop(column, opponentColor)
 				time.Sleep(1 * time.Second)
+				frameCount = 0
+				gameState = yourTurn
+			} else if gameState == yourTurn {
+				column := <-mouseClickBuffer
+				if b.drop(column, color) {
+					frameCount = 0
+					gameState = waiting
+					_, err := fmt.Fprintf(conn, "%d\n", column)
+					if err != nil {
+						panic(err)
+					}
+					time.Sleep(1 * time.Second)
+				}
 			}
 		}
-	}
-	fmt.Fprintf(conn, "end")
-	if b.areFourConnected(color) {
-		gameState = win
-	} else if b.areFourConnected(opponentColor) {
-		gameState = lose
-	} else {
-		gameState = tie
+		won := false
+		// fmt.Fprintf(conn, "end")
+		if b.areFourConnected(color) {
+			gameState = win
+			won = true
+		} else if b.areFourConnected(opponentColor) {
+			won = false
+			gameState = lose
+		} else {
+			gameState = tie
+		}
+		playAgain = <- again
+		
+		if won {
+			gameState = waiting
+		}else{
+			gameState = yourTurn
+		}
 	}
 }
 

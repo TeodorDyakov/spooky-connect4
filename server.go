@@ -186,13 +186,13 @@ func startGame(conn1, conn2 net.Conn) {
 	}
 	go func(){
 		for{
-			if !makeMove(conn1, conn2){
+			if !sendMsg(conn1, conn2){
 				return
 			}
 		}
 	}()
 	for{
-		if !makeMove(conn2, conn1){
+		if !sendMsg(conn2, conn1){
 			return 
 		}
 	}
