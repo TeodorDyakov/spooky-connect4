@@ -20,13 +20,14 @@ import (
 )
 
 var bg *ebiten.Image
+var owl *ebiten.Image
 var red *ebiten.Image
 var yellow *ebiten.Image
 var boardImage *ebiten.Image
 
 func init() {
 	var err error
-	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4trans.png")
+	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4trans2.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,9 +43,13 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	owl, _, err = ebitenutil.NewImageFromFile("images/owl2.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    24,
+		Size:    20,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -70,7 +75,7 @@ const (
 	tileHeight           = 65
 	tileOffset           = 10
 	boardX               = 84
-	boardY               = 100
+	boardY               = 130
 	gravity              = 0.5
 	PLAYER_ONE_COLOR     = "◯"
 	PLAYER_TWO_COLOR     = "⬤"
@@ -94,7 +99,7 @@ var fallY float64 = -tileHeight
 var again chan bool = make(chan bool)
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
-var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
+var messages [5]string = [5]string{"your turn", "other's turn", "you win!", "you lost.", "tie."}
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -140,7 +145,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
-	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 50, color.White)
+	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 80, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
 
@@ -155,6 +160,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
+	op.GeoM.Translate(40, -75)
+	screen.DrawImage(owl, op)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
