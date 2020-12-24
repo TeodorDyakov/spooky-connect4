@@ -136,7 +136,7 @@ read a string from the connection "from" and sent it to "to"
 if it takes more than 60 seconds return false. if the msg is "end" it means the game has end
 therefore return false
 */
-func makeMove(from, to net.Conn) bool {
+func sendMsg(from, to net.Conn) bool {
 	var msg string
 	c := make(chan bool)
 
@@ -184,17 +184,16 @@ func startGame(conn1, conn2 net.Conn) {
 		fmt.Println(conn2, "error")
 		return
 	}
-	for {
-		fmt.Println("debug")
-		if !makeMove(conn1, conn2) {
-			fmt.Fprintf(conn1, "timeout\n")
-			fmt.Fprintf(conn2, "timeout\n")
-			return
+	go func(){
+		for{
+			if !makeMove(conn1, conn2){
+				return
+			}
 		}
-		if !makeMove(conn2, conn1) {
-			fmt.Fprintf(conn1, "timeout\n")
-			fmt.Fprintf(conn2, "timeout\n")
-			return
+	}()
+	for{
+		if !makeMove(conn2, conn1){
+			return 
 		}
 	}
 }

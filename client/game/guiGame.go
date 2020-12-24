@@ -79,15 +79,15 @@ const (
 	CONN_HOST            = "localhost"
 )
 
-var fallY float64
 var frameCount int
 var aiDifficulty int
 var gameState GameState
 var animated [7][6]bool
-var fallSpeed float64 = 5
+var fallSpeed float64
 var b *Board = NewBoard()
 var playingAgainstAi bool
 var mplusNormalFont font.Face
+var fallY float64 = -tileHeight
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
 var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
@@ -166,7 +166,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 		}
 		op.GeoM.Translate(float64(x) * tileHeight, fallY)
 		if animated[x][y] {
-			fallY = 0
+			fallY = -tileHeight
 		}
 	}
 	if player == PLAYER_TWO_COLOR {
