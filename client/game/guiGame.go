@@ -22,6 +22,7 @@ import (
 var bg *ebiten.Image
 var owl *ebiten.Image
 var red *ebiten.Image
+var ghost *ebiten.Image
 var yellow *ebiten.Image
 var boardImage *ebiten.Image
 
@@ -44,6 +45,10 @@ func init() {
 		log.Fatal(err)
 	}
 	owl, _, err = ebitenutil.NewImageFromFile("images/owl2.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ghost, _, err = ebitenutil.NewImageFromFile("images/ghost.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,6 +86,7 @@ const (
 	PLAYER_TWO_COLOR     = "⬤"
 )
 
+var opponentLastCol int
 var lostGames int
 var wonGames int
 var frameCount int
@@ -103,7 +109,7 @@ var messages [5]string = [5]string{"your turn", "other's turn", "you win!", "you
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
-	
+
 	if gameState == yourTurn || gameState == waiting {
 		frameCount++
 	}
@@ -157,12 +163,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
+
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
+	drawGhost(screen)
 	drawOwl(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
+}
+
+func drawGhost(screen *ebiten.Image){
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(opponentLastCol) * tileHeight + boardX + 10, boardY - 75)
+	screen.DrawImage(ghost, op)
 }
 
 func drawOwl(screen *ebiten.Image){
@@ -182,6 +196,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
+	
 	if animated[x][y] {
 		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
 	} else {
@@ -230,9 +245,11 @@ func aiGame(difficulty int) {
 	for !b.gameOver() {
 		if gameState == waiting {
 			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
+			opponentLastCol = bestMove
 			b.drop(bestMove, PLAYER_TWO_COLOR)
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
 			time.Sleep(1 * time.Second)
+
 			gameState = yourTurn
 			frameCount = 0
 		} else if gameState == yourTurn {
@@ -325,6 +342,7 @@ func playMultiplayer() {
 					return
 				}
 				column, _ := strconv.Atoi(msg)
+				opponentLastCol = column
 				b.drop(column, opponentColor)
 				/*
 					wait for the naimation of falling circle to finish

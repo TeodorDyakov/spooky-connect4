@@ -22,7 +22,6 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 	} else if depth == max_depth {
 		return 0, -1
 	}
-
 	var value int
 	var bestMove int
 	shuffledColumns := rand.Perm(7)
