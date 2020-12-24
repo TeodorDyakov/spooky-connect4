@@ -7,6 +7,11 @@ There are two modes of online play:
 
 The server can handle many concurrent games as each game is in its own goroutine. It is implemented with TCP Sockets. 
 You can also play against an AI which is implemented by the alpha-beta game tree search algorithm.  
+
+Screenshot:  
+
+![screen](client/images/screen.jpg)
+
 To play the game
 ``` 
 First install dependencies for Ebiten
