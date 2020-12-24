@@ -82,6 +82,9 @@ const (
 var frameCount int
 var aiDifficulty int
 var gameState GameState
+/*
+whether the fall animation for the given circle was done already
+*/
 var animated [7][6]bool
 var fallSpeed float64
 var b *Board = NewBoard()
@@ -100,7 +103,7 @@ func (g *Game) Update() error {
 	if press {
 		mouseX, _ := ebiten.CursorPosition()
 		/*
-			only send click event to buffer if someone is waiting for it
+		only send click event to buffer if someone is waiting for it
 		*/
 		select {
 		case mouseClickBuffer <- col(mouseX):
@@ -109,15 +112,13 @@ func (g *Game) Update() error {
 	}
 	if isGameOver() && press {
 		mouseX, mouseY := ebiten.CursorPosition()
+		/*check if mouse is in play again area
+		*/
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
 			resetGameState()
-			if playingAgainstAi{
-				go playAgainstAi()
-			}else{ 
-				select {
-				case again <- true:
-				default:
-				}
+			select {
+			case again <- true:
+			default:
 			}
 		}
 	}
@@ -196,10 +197,16 @@ func resetGameState() {
 	b = NewBoard()
 }
 
+/*
+on which column to drop based on x coordinate of click
+*/
 func col(x int) int {
 	return int(float64(x - tileOffset - boardX) / tileHeight)
 }
-
+	
+/*
+game loop of game vs AI
+*/
 func aiGame(difficulty int) {
 	boardCopy := NewBoard()
 	for !b.gameOver() {
@@ -230,6 +237,9 @@ func aiGame(difficulty int) {
 	}
 }
 
+/*
+choose difficulty and start AI game loop
+*/
 func playAgainstAi() {
 	fmt.Printf("Choose difficulty (number between %d and %d)", MIN_DIFFICULTY, MAX_DIFFICULTY)
 	var option string
@@ -245,14 +255,25 @@ func playAgainstAi() {
 	readyToStartGui <- 1
 	aiDifficulty = difficulty
 	playingAgainstAi = true
-	aiGame(difficulty)
+	playAgain := true
+	for playAgain{
+		aiGame(difficulty)
+		playAgain = <- again
+	}
 }
 
+/*
+show menu to choose game type - quick or with friend. After user chooses from console 
+starts the game loop. 
+*/
 func playMultiplayer() {
 	var conn net.Conn
 	var color string
 	var opponentColor string
 	var wait bool
+	/*
+	get signl for server whenther we are first or second
+	*/
 	wait, conn = lobby()
 
 	if wait {
@@ -285,6 +306,9 @@ func playMultiplayer() {
 				}
 				column, _ := strconv.Atoi(msg)
 				b.drop(column, opponentColor)
+				/*
+				wait for the naimation of falling circle to finish
+				*/
 				time.Sleep(1 * time.Second)
 				frameCount = 0
 				gameState = yourTurn
@@ -297,6 +321,9 @@ func playMultiplayer() {
 					if err != nil {
 						panic(err)
 					}
+					/*
+					wait for the naimation of falling circle to finish
+					*/
 					time.Sleep(1 * time.Second)
 				}
 			}
@@ -312,8 +339,14 @@ func playMultiplayer() {
 		} else {
 			gameState = tie
 		}
+		/*
+		wait for user to click play again
+		*/
 		playAgain = <- again
 		
+		/*
+		if you won the last game you are second in the next
+		*/
 		if won {
 			gameState = waiting
 		}else{
