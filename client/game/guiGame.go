@@ -79,10 +79,11 @@ const (
 	CONN_HOST            = "localhost"
 )
 
+var lostGames int
+var wonGames int
 var frameCount int
 var aiDifficulty int
 var gameState GameState
-
 /*
 whether the fall animation for the given circle was done already
 */
@@ -142,6 +143,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
+	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
 
@@ -157,7 +159,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
 	if isGameOver() {
-		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 230, 580, color.White)
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
 }
 
@@ -231,8 +233,10 @@ func aiGame(difficulty int) {
 
 	if b.areFourConnected(PLAYER_ONE_COLOR) {
 		gameState = win
+		wonGames++
 	} else if b.areFourConnected(PLAYER_TWO_COLOR) {
 		gameState = lose
+		lostGames++
 	} else {
 		gameState = tie
 	}
@@ -329,14 +333,15 @@ func playMultiplayer() {
 				}
 			}
 		}
-		won := false
-		// fmt.Fprintf(conn, "end")
+		var won bool
 		if b.areFourConnected(color) {
 			gameState = win
 			won = true
+			wonGames++
 		} else if b.areFourConnected(opponentColor) {
-			won = false
 			gameState = lose
+			won = false
+			lostGames++
 		} else {
 			gameState = tie
 		}
