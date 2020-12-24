@@ -2,27 +2,27 @@ package connect4FMI
 
 import (
 	"fmt"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
-	"image/color"
-	_ "image/jpeg"
-	_ "image/png"
+	"os"
 	"log"
 	"net"
-	"os"
-	"strconv"
 	"time"
+	"strconv"
+	"image/color"
+	_ "image/png"
+	_ "image/jpeg"
+	"golang.org/x/image/font"
+	"github.com/hajimehoshi/ebiten/v2"
+	"golang.org/x/image/font/opentype"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 )
 
-var boardImage *ebiten.Image
+var bg *ebiten.Image
 var red *ebiten.Image
 var yellow *ebiten.Image
-var bg *ebiten.Image
+var boardImage *ebiten.Image
 
 func init() {
 	var err error
@@ -79,18 +79,18 @@ const (
 	CONN_HOST            = "localhost"
 )
 
-var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
-var gameState GameState
 var fallY float64
-var fallSpeed float64 = 5
-var mplusNormalFont font.Face
 var frameCount int
 var aiDifficulty int
-var mouseClickBuffer chan int = make(chan int)
-var readyToStartGui chan int = make(chan int)
-var b *Board = NewBoard()
+var gameState GameState
 var animated [7][6]bool
+var fallSpeed float64 = 5
+var b *Board = NewBoard()
 var playingAgainstAi bool
+var mplusNormalFont font.Face
+var readyToStartGui chan int = make(chan int)
+var mouseClickBuffer chan int = make(chan int)
+var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -126,13 +126,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		frameCount++
 	}
 
-	if frameCount == fps*SECONDS_TO_MAKE_TURN {
+	if frameCount == fps * SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
-	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
+	text.Draw(screen, "00:" + strconv.Itoa(SECONDS_TO_MAKE_TURN - frameCount / fps), mplusNormalFont, 490, 580, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -152,10 +152,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
-	destY := tileOffset + float64(y)*tileHeight
+	op.GeoM.Translate(boardX + tileOffset, boardY + tileOffset)
+	destY := tileOffset + float64(y) * tileHeight
 	if animated[x][y] {
-		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
+		op.GeoM.Translate(float64(x) * tileHeight, float64(y) * tileHeight)
 	} else {
 		fallY += fallSpeed
 		fallSpeed += gravity
@@ -164,7 +164,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 			fallSpeed = 0
 			animated[x][y] = true
 		}
-		op.GeoM.Translate(float64(x)*tileHeight, fallY)
+		op.GeoM.Translate(float64(x) * tileHeight, fallY)
 		if animated[x][y] {
 			fallY = 0
 		}
@@ -188,7 +188,7 @@ func resetGameState() {
 }
 
 func col(x int) int {
-	return int(float64(x-tileOffset-boardX) / tileHeight)
+	return int(float64(x - tileOffset - boardX) / tileHeight)
 }
 
 func aiGame(difficulty int) {
@@ -200,12 +200,14 @@ func aiGame(difficulty int) {
 			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
 			time.Sleep(1 * time.Second)
 			gameState = yourTurn
+			frameCount = 0
 		} else if gameState == yourTurn {
 			column := <-mouseClickBuffer
 			if b.drop(column, PLAYER_ONE_COLOR) {
 				boardCopy.drop(column, PLAYER_ONE_COLOR)
 				time.Sleep(1 * time.Second)
 				gameState = waiting
+				frameCount = 0
 			}
 		}
 	}
