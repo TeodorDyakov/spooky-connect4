@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/TeodorDyakov/connect4FMI/client/game"
+	"github.com/TeodorDyakov/spooky-connect4/client/game"
 )
 
 func main() {

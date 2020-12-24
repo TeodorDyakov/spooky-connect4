@@ -152,7 +152,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 80, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
-	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
+	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {

@@ -1,4 +1,4 @@
-module github.com/TeodorDyakov/connect4FMI/client
+module github.com/TeodorDyakov/spooky-connect4/client
 
 go 1.15
 
