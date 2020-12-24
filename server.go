@@ -184,16 +184,16 @@ func startGame(conn1, conn2 net.Conn) {
 		fmt.Println(conn2, "error")
 		return
 	}
-	go func(){
-		for{
-			if !sendMsg(conn1, conn2){
+	go func() {
+		for {
+			if !sendMsg(conn1, conn2) {
 				return
 			}
 		}
 	}()
-	for{
-		if !sendMsg(conn2, conn1){
-			return 
+	for {
+		if !sendMsg(conn2, conn1) {
+			return
 		}
 	}
 }

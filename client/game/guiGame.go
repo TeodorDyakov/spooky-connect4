@@ -2,21 +2,21 @@ package connect4FMI
 
 import (
 	"fmt"
-	"os"
-	"log"
-	"net"
-	"time"
-	"strconv"
-	"image/color"
-	_ "image/png"
-	_ "image/jpeg"
-	"golang.org/x/image/font"
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/image/font/opentype"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
+	"image/color"
+	_ "image/jpeg"
+	_ "image/png"
+	"log"
+	"net"
+	"os"
+	"strconv"
+	"time"
 )
 
 var bg *ebiten.Image
@@ -55,11 +55,11 @@ type Game struct{}
 type GameState int
 
 const (
-	yourTurn GameState   = 0
-	waiting              = 1
-	win                  = 2
-	lose                 = 3
-	tie                  = 4
+	yourTurn GameState = 0
+	waiting            = 1
+	win                = 2
+	lose               = 3
+	tie                = 4
 )
 
 const (
@@ -82,6 +82,7 @@ const (
 var frameCount int
 var aiDifficulty int
 var gameState GameState
+
 /*
 whether the fall animation for the given circle was done already
 */
@@ -103,7 +104,7 @@ func (g *Game) Update() error {
 	if press {
 		mouseX, _ := ebiten.CursorPosition()
 		/*
-		only send click event to buffer if someone is waiting for it
+			only send click event to buffer if someone is waiting for it
 		*/
 		select {
 		case mouseClickBuffer <- col(mouseX):
@@ -113,7 +114,7 @@ func (g *Game) Update() error {
 	if isGameOver() && press {
 		mouseX, mouseY := ebiten.CursorPosition()
 		/*check if mouse is in play again area
-		*/
+		 */
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
 			resetGameState()
 			select {
@@ -132,17 +133,17 @@ func isGameOver() bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string = messages[gameState]
 
-	if gameState == yourTurn || gameState == waiting{
+	if gameState == yourTurn || gameState == waiting {
 		frameCount++
 	}
 
-	if frameCount == fps * SECONDS_TO_MAKE_TURN {
+	if frameCount == fps*SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
-	text.Draw(screen, "00:" + strconv.Itoa(SECONDS_TO_MAKE_TURN - frameCount / fps), mplusNormalFont, 490, 580, color.White)
+	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 490, 580, color.White)
 
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
@@ -162,10 +163,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(boardX + tileOffset, boardY + tileOffset)
-	destY := tileOffset + float64(y) * tileHeight
+	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
+	destY := tileOffset + float64(y)*tileHeight
 	if animated[x][y] {
-		op.GeoM.Translate(float64(x) * tileHeight, float64(y) * tileHeight)
+		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
 	} else {
 		fallY += fallSpeed
 		fallSpeed += gravity
@@ -174,7 +175,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 			fallSpeed = 0
 			animated[x][y] = true
 		}
-		op.GeoM.Translate(float64(x) * tileHeight, fallY)
+		op.GeoM.Translate(float64(x)*tileHeight, fallY)
 		if animated[x][y] {
 			fallY = -tileHeight
 		}
@@ -201,9 +202,9 @@ func resetGameState() {
 on which column to drop based on x coordinate of click
 */
 func col(x int) int {
-	return int(float64(x - tileOffset - boardX) / tileHeight)
+	return int(float64(x-tileOffset-boardX) / tileHeight)
 }
-	
+
 /*
 game loop of game vs AI
 */
@@ -256,15 +257,15 @@ func playAgainstAi() {
 	aiDifficulty = difficulty
 	playingAgainstAi = true
 	playAgain := true
-	for playAgain{
+	for playAgain {
 		aiGame(difficulty)
-		playAgain = <- again
+		playAgain = <-again
 	}
 }
 
 /*
-show menu to choose game type - quick or with friend. After user chooses from console 
-starts the game loop. 
+show menu to choose game type - quick or with friend. After user chooses from console
+starts the game loop.
 */
 func playMultiplayer() {
 	var conn net.Conn
@@ -272,7 +273,7 @@ func playMultiplayer() {
 	var opponentColor string
 	var wait bool
 	/*
-	get signl for server whenther we are first or second
+		get signl for server whenther we are first or second
 	*/
 	wait, conn = lobby()
 
@@ -307,7 +308,7 @@ func playMultiplayer() {
 				column, _ := strconv.Atoi(msg)
 				b.drop(column, opponentColor)
 				/*
-				wait for the naimation of falling circle to finish
+					wait for the naimation of falling circle to finish
 				*/
 				time.Sleep(1 * time.Second)
 				frameCount = 0
@@ -322,7 +323,7 @@ func playMultiplayer() {
 						panic(err)
 					}
 					/*
-					wait for the naimation of falling circle to finish
+						wait for the naimation of falling circle to finish
 					*/
 					time.Sleep(1 * time.Second)
 				}
@@ -340,16 +341,16 @@ func playMultiplayer() {
 			gameState = tie
 		}
 		/*
-		wait for user to click play again
+			wait for user to click play again
 		*/
-		playAgain = <- again
-		
+		playAgain = <-again
+
 		/*
-		if you won the last game you are second in the next
+			if you won the last game you are second in the next
 		*/
 		if won {
 			gameState = waiting
-		}else{
+		} else {
 			gameState = yourTurn
 		}
 	}
