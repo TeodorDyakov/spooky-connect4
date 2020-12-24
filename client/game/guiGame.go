@@ -103,7 +103,14 @@ var messages [5]string = [5]string{"your turn", "other's turn", "you win!", "you
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
+	
+	if gameState == yourTurn || gameState == waiting {
+		frameCount++
+	}
 
+	if frameCount == fps*SECONDS_TO_MAKE_TURN {
+		os.Exit(1)
+	}
 	if press {
 		mouseX, _ := ebiten.CursorPosition()
 		/*
@@ -135,14 +142,6 @@ func isGameOver() bool {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string = messages[gameState]
-
-	if gameState == yourTurn || gameState == waiting {
-		frameCount++
-	}
-
-	if frameCount == fps*SECONDS_TO_MAKE_TURN {
-		os.Exit(1)
-	}
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
 	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 80, color.White)
@@ -160,22 +159,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
-	// op.GeoM.Translate(40, -75)
-	// mouseX, _ := ebiten.CursorPosition()
-	// if(mouseX < boardX){
-	// 	mouseX = boardX
-	// }
-	// if(mouseX > boardX + 7 * tileHeight){
-	// 	mouseX = boardX + 7 * tileHeight
-	// }
-	// op.GeoM.Translate(float64(mouseX) - boardX -30, -75)
-	drawOwl()
+	drawOwl(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
 }
 
-func drawOwl(){
+func drawOwl(screen *ebiten.Image){
 	op := &ebiten.DrawImageOptions{}
 	mouseX, _ := ebiten.CursorPosition()
 	if(mouseX < boardX){
@@ -184,7 +174,7 @@ func drawOwl(){
 	if(mouseX > boardX + 7 * tileHeight){
 		mouseX = boardX + 7 * tileHeight
 	}
-	op.GeoM.Translate(float64(mouseX) - boardX -30, -75)
+	op.GeoM.Translate(float64(mouseX) - 30, boardY - 75)
 	screen.DrawImage(owl, op)
 }
 
