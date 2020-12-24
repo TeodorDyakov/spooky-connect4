@@ -74,9 +74,6 @@ const (
 	gravity              = 0.5
 	PLAYER_ONE_COLOR     = "◯"
 	PLAYER_TWO_COLOR     = "⬤"
-	CONN_TYPE            = "tcp"
-	CONN_PORT            = "12345"
-	CONN_HOST            = "localhost"
 )
 
 var lostGames int
@@ -90,11 +87,11 @@ whether the fall animation for the given circle was done already
 var animated [7][6]bool
 var fallSpeed float64
 var b *Board = NewBoard()
-var again chan bool = make(chan bool)
 var playingAgainstAi bool
 var mplusNormalFont font.Face
 var wonLast bool
 var fallY float64 = -tileHeight
+var again chan bool = make(chan bool)
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
 var messages [5]string = [5]string{"your turn", "other's turn", "you win :D", "you lose :(", "tie"}
