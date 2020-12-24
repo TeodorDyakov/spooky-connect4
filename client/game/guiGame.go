@@ -161,6 +161,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
 	// op.GeoM.Translate(40, -75)
+	// mouseX, _ := ebiten.CursorPosition()
+	// if(mouseX < boardX){
+	// 	mouseX = boardX
+	// }
+	// if(mouseX > boardX + 7 * tileHeight){
+	// 	mouseX = boardX + 7 * tileHeight
+	// }
+	// op.GeoM.Translate(float64(mouseX) - boardX -30, -75)
+	drawOwl()
+	if isGameOver() {
+		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
+	}
+}
+
+func drawOwl(){
+	op := &ebiten.DrawImageOptions{}
 	mouseX, _ := ebiten.CursorPosition()
 	if(mouseX < boardX){
 		mouseX = boardX
@@ -170,9 +186,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	op.GeoM.Translate(float64(mouseX) - boardX -30, -75)
 	screen.DrawImage(owl, op)
-	if isGameOver() {
-		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
-	}
 }
 
 func drawTile(x, y int, player string, screen *ebiten.Image) {
