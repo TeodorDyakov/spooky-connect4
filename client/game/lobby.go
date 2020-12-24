@@ -10,6 +10,12 @@ Start the command line in which you connect to another player
 return a boolean value indicating whenther you are first or
 you should wait your tun when game starts and a connection to the server
 */
+const(
+	CONN_TYPE            = "tcp"
+	CONN_PORT            = "12345"
+	CONN_HOST            = "localhost"
+)
+
 func lobby() (bool, net.Conn) {
 	var waiting bool
 
