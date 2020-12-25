@@ -19,6 +19,6 @@ sudo apt install libc6-dev libglu1-mesa-dev libgl1-mesa-dev libxcursor-dev libxi
 
 git clone https://github.com/TeodorDyakov/spooky-connect4
 
-cd client
+cd spooky-connect4/client
 go run main.go
 
