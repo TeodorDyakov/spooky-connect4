@@ -66,7 +66,7 @@ type GameState int
 
 const (
 	yourTurn GameState = iota
-	waiting          
+	opponentTurn          
 	win                
 	lose               
 	tie                
@@ -90,7 +90,6 @@ var opponentLastCol int
 var lostGames int
 var wonGames int
 var frameCount int
-var aiDifficulty int
 var gameState GameState
 /*
 whether the fall animation for the given circle was done already
@@ -106,11 +105,15 @@ var again chan bool = make(chan bool)
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
 var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
+var opponentAnimation bool
+var conn net.Conn
+var playerColor string
+var opponentColor string
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
 
-	if gameState == yourTurn || gameState == waiting {
+	if gameState == yourTurn || gameState == opponentTurn {
 		frameCount++
 	}
 
@@ -120,10 +123,10 @@ func (g *Game) Update() error {
 	if press {
 		mouseX, _ := ebiten.CursorPosition()
 		/*
-			only send click event to buffer if someone is waiting for it
+			only send click event to buffer if someone is opponentTurn for it
 		*/
 		select {
-		case mouseClickBuffer <- col(mouseX):
+		case mouseClickBuffer <- xcoordToColumn(mouseX):
 		default:
 		}
 	}
@@ -166,7 +169,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
-	drawGhost(screen)
+	if opponentAnimation {
+		drawGhost(screen)
+	}
 	drawOwl(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
@@ -226,77 +231,36 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func resetGameState() {
 	var arr [7][6]bool
 	animated = arr
-	gameState = waiting
+	gameState = opponentTurn
 	b = NewBoard()
 }
 
 /*
 on which column to drop based on x coordinate of click
 */
-func col(x int) int {
+func xcoordToColumn(x int) int {
 	return int(float64(x-tileOffset-boardX) / tileHeight)
-}
-
-/*
-game loop of game vs AI
-*/
-func aiGame(difficulty int) {
-	boardCopy := NewBoard()
-	for !b.gameOver() {
-		if gameState == waiting {
-			_, bestMove := alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
-			opponentLastCol = bestMove
-			b.drop(bestMove, PLAYER_TWO_COLOR)
-			boardCopy.drop(bestMove, PLAYER_TWO_COLOR)
-			time.Sleep(1 * time.Second)
-
-			gameState = yourTurn
-			frameCount = 0
-		} else if gameState == yourTurn {
-			column := <-mouseClickBuffer
-			if b.drop(column, PLAYER_ONE_COLOR) {
-				boardCopy.drop(column, PLAYER_ONE_COLOR)
-				time.Sleep(1 * time.Second)
-				gameState = waiting
-				frameCount = 0
-			}
-		}
-	}
-
-	if b.areFourConnected(PLAYER_ONE_COLOR) {
-		gameState = win
-		wonGames++
-	} else if b.areFourConnected(PLAYER_TWO_COLOR) {
-		gameState = lose
-		lostGames++
-	} else {
-		gameState = tie
-	}
 }
 
 /*
 choose difficulty and start AI game loop
 */
+
 func playAgainstAi() {
 	fmt.Printf("Choose difficulty (number between %d and %d)", MIN_DIFFICULTY, MAX_DIFFICULTY)
 	var option string
 	fmt.Scan(&option)
 
-	difficulty, err := strconv.Atoi(option)
+	var err error
+	difficulty, err = strconv.Atoi(option)
 
 	for err != nil || difficulty < MIN_DIFFICULTY || difficulty > MAX_DIFFICULTY {
 		fmt.Println("Invalid input! Try again:")
 		fmt.Scan(&option)
 		difficulty, err = strconv.Atoi(option)
 	}
-	readyToStartGui <- 1
-	aiDifficulty = difficulty
 	playingAgainstAi = true
-	playAgain := true
-	for playAgain {
-		aiGame(difficulty)
-		playAgain = <-again
-	}
+	gameLogic()
 }
 
 /*
@@ -304,60 +268,76 @@ show menu to choose game type - quick or with friend. After user chooses from co
 starts the game loop.
 */
 func playMultiplayer() {
-	var conn net.Conn
-	var color string
-	var opponentColor string
-	var wait bool
 	/*
 		get signal from server whether we are first or second to play
 	*/
+	var wait bool
 	wait, conn = lobby()
 
 	if wait {
-		color = PLAYER_TWO_COLOR
+		playerColor = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
+		gameState = opponentTurn	
 	} else {
-		color = PLAYER_ONE_COLOR
+		playerColor = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
-	}
-	if wait {
-		gameState = waiting
-	} else {
 		gameState = yourTurn
 	}
 	readyToStartGui <- 1
+	gameLogic();
+}
 
+var difficulty int
+
+func gameLogic(){
+	boardCopy := NewBoard()
+	if playingAgainstAi{
+		playerColor = PLAYER_ONE_COLOR
+		opponentColor = PLAYER_TWO_COLOR
+		readyToStartGui <- 1
+	}
 	playAgain := true
 	for playAgain {
 		for !b.gameOver() {
-			if gameState == waiting {
-				var msg string
-				_, err := fmt.Fscan(conn, &msg)
-				if err != nil {
-					panic(err)
+			if gameState == opponentTurn {
+				var column int
+				if playingAgainstAi{
+					_, column = alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
+				}else {
+					var msg string
+					_, err := fmt.Fscan(conn, &msg)
+					if err != nil {
+						panic(err)
+					}
+					if msg == "timeout" || msg == "error" {
+						fmt.Println("opponent disconnected!")
+						panic(nil)
+						return
+					}
+					column, _ = strconv.Atoi(msg)
 				}
-				if msg == "timeout" || msg == "error" {
-					fmt.Println("opponent disconnected!")
-					panic(nil)
-					return
-				}
-				column, _ := strconv.Atoi(msg)
 				opponentLastCol = column
+				opponentAnimation = true
 				b.drop(column, opponentColor)
+				boardCopy.drop(column, opponentColor)
 				/*
 					wait for the animation of falling circle to finish
 				*/
 				time.Sleep(1 * time.Second)
+				opponentAnimation = false
 				frameCount = 0
 				gameState = yourTurn
 			} else if gameState == yourTurn {
 				column := <-mouseClickBuffer
-				if b.drop(column, color) {
+				if b.drop(column, playerColor) {
+					boardCopy.drop(column, playerColor)
 					frameCount = 0
-					gameState = waiting
-					_, err := fmt.Fprintf(conn, "%d\n", column)
-					if err != nil {
-						panic(err)
+					gameState = opponentTurn
+					if !playingAgainstAi{
+						_, err := fmt.Fprintf(conn, "%d\n", column)
+						if err != nil {
+							panic(err)
+						}
 					}
 					/*
 						wait for the animation of falling circle to finish
@@ -367,7 +347,7 @@ func playMultiplayer() {
 			}
 		}
 		var won bool
-		if b.areFourConnected(color) {
+		if b.areFourConnected(playerColor) {
 			gameState = win
 			won = true
 			wonGames++
@@ -387,7 +367,7 @@ func playMultiplayer() {
 			if you won the last game you are second in the next
 		*/
 		if won {
-			gameState = waiting
+			gameState = opponentTurn
 		} else {
 			gameState = yourTurn
 		}
