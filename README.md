@@ -17,6 +17,8 @@ To play the game
 First install dependencies for Ebiten
 sudo apt install libc6-dev libglu1-mesa-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
 
+git clone https://github.com/TeodorDyakov/spooky-connect4
+
 cd client
 go run main.go
 
