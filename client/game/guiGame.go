@@ -36,11 +36,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	red, _, err = ebitenutil.NewImageFromFile("images/red.png")
+	red, _, err = ebitenutil.NewImageFromFile("images/redzwei.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	yellow, _, err = ebitenutil.NewImageFromFile("images/yellow2.png")
+	yellow, _, err = ebitenutil.NewImageFromFile("images/green.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,7 +81,7 @@ const (
 	tileOffset           = 10
 	boardX               = 84
 	boardY               = 130
-	gravity              = 0.5
+	gravity              = 0.3
 	PLAYER_ONE_COLOR     = "◯"
 	PLAYER_TWO_COLOR     = "⬤"
 )
@@ -150,7 +150,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string = messages[gameState]
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
-	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, 270, 80, color.White)
+	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
@@ -309,7 +309,7 @@ func playMultiplayer() {
 	var opponentColor string
 	var wait bool
 	/*
-		get signl for server whenther we are first or second
+		get signal from server whether we are first or second to play
 	*/
 	wait, conn = lobby()
 
@@ -345,7 +345,7 @@ func playMultiplayer() {
 				opponentLastCol = column
 				b.drop(column, opponentColor)
 				/*
-					wait for the naimation of falling circle to finish
+					wait for the animation of falling circle to finish
 				*/
 				time.Sleep(1 * time.Second)
 				frameCount = 0
@@ -360,7 +360,7 @@ func playMultiplayer() {
 						panic(err)
 					}
 					/*
-						wait for the naimation of falling circle to finish
+						wait for the animation of falling circle to finish
 					*/
 					time.Sleep(1 * time.Second)
 				}
