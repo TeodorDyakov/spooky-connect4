@@ -65,11 +65,11 @@ type Game struct{}
 type GameState int
 
 const (
-	yourTurn GameState = 0
-	waiting            = 1
-	win                = 2
-	lose               = 3
-	tie                = 4
+	yourTurn GameState = iota
+	waiting          
+	win                
+	lose               
+	tie                
 )
 
 const (
@@ -105,7 +105,7 @@ var fallY float64 = -tileHeight
 var again chan bool = make(chan bool)
 var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
-var messages [5]string = [5]string{"your turn", "other's turn", "you win!", "you lost.", "tie."}
+var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
