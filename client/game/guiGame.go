@@ -66,10 +66,10 @@ type GameState int
 
 const (
 	yourTurn GameState = iota
-	opponentTurn          
-	win                
-	lose               
-	tie                
+	opponentTurn
+	win
+	lose
+	tie
 )
 
 const (
@@ -91,6 +91,7 @@ var lostGames int
 var wonGames int
 var frameCount int
 var gameState GameState
+
 /*
 whether the fall animation for the given circle was done already
 */
@@ -153,7 +154,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string = messages[gameState]
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
-	text.Draw(screen, "W  " + strconv.Itoa(wonGames)+":" +strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
+	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
@@ -178,22 +179,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-func drawGhost(screen *ebiten.Image){
+func drawGhost(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(opponentLastCol) * tileHeight + boardX + 10, boardY - 75)
+	op.GeoM.Translate(float64(opponentLastCol)*tileHeight+boardX+10, boardY-75)
 	screen.DrawImage(ghost, op)
 }
 
-func drawOwl(screen *ebiten.Image){
+func drawOwl(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	mouseX, _ := ebiten.CursorPosition()
-	if(mouseX < boardX){
+	if mouseX < boardX {
 		mouseX = boardX
 	}
-	if(mouseX > boardX + 7 * tileHeight){
-		mouseX = boardX + 7 * tileHeight
+	if mouseX > boardX+7*tileHeight {
+		mouseX = boardX + 7*tileHeight
 	}
-	op.GeoM.Translate(float64(mouseX) - 30, boardY - 75)
+	op.GeoM.Translate(float64(mouseX)-30, boardY-75)
 	screen.DrawImage(owl, op)
 }
 
@@ -201,7 +202,7 @@ func drawTile(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
-	
+
 	if animated[x][y] {
 		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
 	} else {
@@ -270,25 +271,25 @@ func playMultiplayer() {
 	if wait {
 		playerColor = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
-		gameState = opponentTurn	
+		gameState = opponentTurn
 	} else {
 		playerColor = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
 		gameState = yourTurn
 	}
 	readyToStartGui <- 1
-	gameLogic();
+	gameLogic()
 }
 
 /*
 plays a full turn of the game, meaning you make a turn, and than thhen the opponent makes one
 */
-func playTurn(boardCopy *Board){
+func playTurn(boardCopy *Board) {
 	if gameState == opponentTurn {
 		var column int
-		if playingAgainstAi{
+		if playingAgainstAi {
 			_, column = alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
-		}else {
+		} else {
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
 			if err != nil {
@@ -318,7 +319,7 @@ func playTurn(boardCopy *Board){
 			boardCopy.drop(column, playerColor)
 			frameCount = 0
 			gameState = opponentTurn
-			if !playingAgainstAi{
+			if !playingAgainstAi {
 				_, err := fmt.Fprintf(conn, "%d\n", column)
 				if err != nil {
 					panic(err)
@@ -332,9 +333,9 @@ func playTurn(boardCopy *Board){
 	}
 }
 
-func gameLogic(){
+func gameLogic() {
 	boardCopy := NewBoard()
-	if playingAgainstAi{
+	if playingAgainstAi {
 		playerColor = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
 		readyToStartGui <- 1
@@ -362,7 +363,7 @@ func gameLogic(){
 		*/
 		playAgain = <-again
 		/*reset board and game state
-		*/
+		 */
 		var arr [7][6]bool
 		animated = arr
 		gameState = opponentTurn
