@@ -109,6 +109,7 @@ var opponentAnimation bool
 var conn net.Conn
 var playerColor string
 var opponentColor string
+var difficulty int
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -135,7 +136,6 @@ func (g *Game) Update() error {
 		/*check if mouse is in play again area
 		 */
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
-			resetGameState()
 			select {
 			case again <- true:
 			default:
@@ -228,13 +228,6 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 640, 640
 }
 
-func resetGameState() {
-	var arr [7][6]bool
-	animated = arr
-	gameState = opponentTurn
-	b = NewBoard()
-}
-
 /*
 on which column to drop based on x coordinate of click
 */
@@ -287,7 +280,57 @@ func playMultiplayer() {
 	gameLogic();
 }
 
-var difficulty int
+/*
+plays a full turn of the game, meaning you make a turn, and than thhen the opponent makes one
+*/
+func playTurn(boardCopy *Board){
+	if gameState == opponentTurn {
+		var column int
+		if playingAgainstAi{
+			_, column = alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
+		}else {
+			var msg string
+			_, err := fmt.Fscan(conn, &msg)
+			if err != nil {
+				panic(err)
+			}
+			if msg == "timeout" || msg == "error" {
+				fmt.Println("opponent disconnected!")
+				panic(nil)
+				return
+			}
+			column, _ = strconv.Atoi(msg)
+		}
+		opponentLastCol = column
+		opponentAnimation = true
+		b.drop(column, opponentColor)
+		boardCopy.drop(column, opponentColor)
+		/*
+			wait for the animation of falling circle to finish
+		*/
+		time.Sleep(1 * time.Second)
+		opponentAnimation = false
+		frameCount = 0
+		gameState = yourTurn
+	} else if gameState == yourTurn {
+		column := <-mouseClickBuffer
+		if b.drop(column, playerColor) {
+			boardCopy.drop(column, playerColor)
+			frameCount = 0
+			gameState = opponentTurn
+			if !playingAgainstAi{
+				_, err := fmt.Fprintf(conn, "%d\n", column)
+				if err != nil {
+					panic(err)
+				}
+			}
+			/*
+				wait for the animation of falling circle to finish
+			*/
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
 
 func gameLogic(){
 	boardCopy := NewBoard()
@@ -296,55 +339,11 @@ func gameLogic(){
 		opponentColor = PLAYER_TWO_COLOR
 		readyToStartGui <- 1
 	}
+
 	playAgain := true
 	for playAgain {
 		for !b.gameOver() {
-			if gameState == opponentTurn {
-				var column int
-				if playingAgainstAi{
-					_, column = alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
-				}else {
-					var msg string
-					_, err := fmt.Fscan(conn, &msg)
-					if err != nil {
-						panic(err)
-					}
-					if msg == "timeout" || msg == "error" {
-						fmt.Println("opponent disconnected!")
-						panic(nil)
-						return
-					}
-					column, _ = strconv.Atoi(msg)
-				}
-				opponentLastCol = column
-				opponentAnimation = true
-				b.drop(column, opponentColor)
-				boardCopy.drop(column, opponentColor)
-				/*
-					wait for the animation of falling circle to finish
-				*/
-				time.Sleep(1 * time.Second)
-				opponentAnimation = false
-				frameCount = 0
-				gameState = yourTurn
-			} else if gameState == yourTurn {
-				column := <-mouseClickBuffer
-				if b.drop(column, playerColor) {
-					boardCopy.drop(column, playerColor)
-					frameCount = 0
-					gameState = opponentTurn
-					if !playingAgainstAi{
-						_, err := fmt.Fprintf(conn, "%d\n", column)
-						if err != nil {
-							panic(err)
-						}
-					}
-					/*
-						wait for the animation of falling circle to finish
-					*/
-					time.Sleep(1 * time.Second)
-				}
-			}
+			playTurn(boardCopy)
 		}
 		var won bool
 		if b.areFourConnected(playerColor) {
@@ -362,7 +361,13 @@ func gameLogic(){
 			wait for user to click play again
 		*/
 		playAgain = <-again
-
+		/*reset board and game state
+		*/
+		var arr [7][6]bool
+		animated = arr
+		gameState = opponentTurn
+		b = NewBoard()
+		boardCopy = NewBoard()
 		/*
 			if you won the last game you are second in the next
 		*/
