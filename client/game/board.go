@@ -21,6 +21,18 @@ func (b *Board) gameOver() bool {
 	return b.movesMade == 42 || b.areFourConnected(PLAYER_ONE_COLOR) || b.areFourConnected(PLAYER_TWO_COLOR)
 }
 
+func (b *Board)copyOfBoard()*Board{
+	boardCopy := NewBoard()
+	for i := 0; i < BOARD_HEIGHT; i++ {
+		for j := 0; j < BOARD_WIDTH; j++ {
+			boardCopy.board[i][j] = b.board[i][j]
+		}
+	}
+	boardCopy.col = make([]int, BOARD_WIDTH)
+	copy(boardCopy.col, b.col)
+	return boardCopy
+}
+
 func NewBoard() *Board {
 	var b *Board
 	b = new(Board)

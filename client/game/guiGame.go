@@ -100,7 +100,6 @@ var fallSpeed float64
 var b *Board = NewBoard()
 var playingAgainstAi bool
 var mplusNormalFont font.Face
-var wonLast bool
 var fallY float64 = -tileHeight
 var again chan bool = make(chan bool)
 var readyToStartGui chan int = make(chan int)
@@ -284,11 +283,11 @@ func playMultiplayer() {
 /*
 plays a full turn of the game, meaning you make a turn, and than thhen the opponent makes one
 */
-func playTurn(boardCopy *Board) {
+func playTurn() {
 	if gameState == opponentTurn {
 		var column int
 		if playingAgainstAi {
-			_, column = alphabeta(boardCopy, true, 0, SMALL, BIG, difficulty)
+			column = getAiMove(b, difficulty)
 		} else {
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
@@ -305,7 +304,6 @@ func playTurn(boardCopy *Board) {
 		opponentLastCol = column
 		opponentAnimation = true
 		b.drop(column, opponentColor)
-		boardCopy.drop(column, opponentColor)
 		/*
 			wait for the animation of falling circle to finish
 		*/
@@ -316,7 +314,6 @@ func playTurn(boardCopy *Board) {
 	} else if gameState == yourTurn {
 		column := <-mouseClickBuffer
 		if b.drop(column, playerColor) {
-			boardCopy.drop(column, playerColor)
 			frameCount = 0
 			gameState = opponentTurn
 			if !playingAgainstAi {
@@ -334,7 +331,6 @@ func playTurn(boardCopy *Board) {
 }
 
 func gameLogic() {
-	boardCopy := NewBoard()
 	if playingAgainstAi {
 		playerColor = PLAYER_ONE_COLOR
 		opponentColor = PLAYER_TWO_COLOR
@@ -344,7 +340,7 @@ func gameLogic() {
 	playAgain := true
 	for playAgain {
 		for !b.gameOver() {
-			playTurn(boardCopy)
+			playTurn()
 		}
 		var won bool
 		if b.areFourConnected(playerColor) {
@@ -362,13 +358,10 @@ func gameLogic() {
 			wait for user to click play again
 		*/
 		playAgain = <-again
-		/*reset board and game state
-		 */
+		/*reset board*/
 		var arr [7][6]bool
 		animated = arr
-		gameState = opponentTurn
 		b = NewBoard()
-		boardCopy = NewBoard()
 		/*
 			if you won the last game you are second in the next
 		*/

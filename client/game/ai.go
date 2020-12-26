@@ -14,6 +14,13 @@ const (
 	SMALL = -BIG
 )
 
+
+func getAiMove(b *Board, difficulty int)int{
+	copy := b.copyOfBoard()
+	_, move := alphabeta(copy, true, 0, SMALL, BIG, difficulty)
+	return move
+}
+
 func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int, int) {
 	if b.areFourConnected(PLAYER_TWO_COLOR) {
 		return BIG - depth, -1
