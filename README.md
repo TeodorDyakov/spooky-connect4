@@ -12,12 +12,9 @@ Screenshot:
 
 ![screen](client/images/screen.jpg)
 
-To play the game
-``` 
-First install dependencies for Ebiten
-
+To build and run locally:
+```
 git clone https://github.com/TeodorDyakov/spooky-connect4
-
 cd spooky-connect4/client
 go run -x main.go
 
