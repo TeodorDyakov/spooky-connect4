@@ -237,10 +237,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
 	screen.DrawImage(boardImage, op)
+	
+	drawOwl(screen)
 	if opponentAnimation {
 		drawGhost(screen)
 	}
-	drawOwl(screen)
+	
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
@@ -275,7 +277,8 @@ func drawOwl(screen *ebiten.Image) {
 	if mouseX > boardX+7*tileHeight {
 		mouseX = boardX + 7*tileHeight
 	}
-	op.GeoM.Translate(float64(mouseX)-30, boardY-75)
+	owlX := xcoordToColumn(mouseX)*tileHeight + boardX
+	op.GeoM.Translate(float64(owlX), boardY-75)
 	screen.DrawImage(owl, op)
 }
 
