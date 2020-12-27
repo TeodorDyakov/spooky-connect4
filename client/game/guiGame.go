@@ -121,7 +121,7 @@ func (g *Game) Update() error {
 		frameCount++
 	}
 
-	if frameCount == fps * SECONDS_TO_MAKE_TURN {
+	if frameCount == fps*SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
 
@@ -136,47 +136,47 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA){
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA) {
 		gameState = yourTurn
 		go playAgainstAi()
 	}
 
-	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO){
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO) {
 		gameState = waitingForConnect
 		go quickplayLobby(info)
 	}
 
-	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR){
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR) {
 		gameState = waitingForToken
 		go createRoom(info, tokenChan)
 	}
 
-	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC){
+	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC) {
 		gameState = connectToRoomWithToken
 	}
 
-	if gameState == connectToRoomWithToken{
+	if gameState == connectToRoomWithToken {
 		token += string(ebiten.InputChars())
-		if len(token) == 5{
+		if len(token) == 5 {
 			gameState = waitingForConnect
 			go connectToRoom(token, info)
 		}
 	}
 
-	if gameState == waitingForToken{
-		select{
+	if gameState == waitingForToken {
+		select {
 		case token = <-tokenChan:
 			gameState = waitingForConnect
 		default:
 		}
 	}
 
-	if gameState == waitingForConnect{
-		select{
-		case gameInfo := <- info:
-			if gameInfo.waiting{
+	if gameState == waitingForConnect {
+		select {
+		case gameInfo := <-info:
+			if gameInfo.waiting {
 				gameState = opponentTurn
-			}else{
+			} else {
 				gameState = yourTurn
 			}
 			go playMultiplayer(gameInfo.waiting, gameInfo.conn)
@@ -206,27 +206,27 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX, boardY)
-	if gameState == menu{
+	if gameState == menu {
 		screen.DrawImage(boardImage, op)
 		topTextX := 200
 		text.Draw(screen, "Press [A] to play against AI", mplusNormalFont, 200, topTextX, color.White)
-		text.Draw(screen, "Press [R] to create a room", mplusNormalFont, 200, topTextX + 30, color.White)
-		text.Draw(screen, "Press [C] to connect to a room", mplusNormalFont, 200, topTextX + 60, color.White)
-		text.Draw(screen, "Press [O] to play online (quick play)",mplusNormalFont, 200, topTextX + 90, color.White)		
+		text.Draw(screen, "Press [R] to create a room", mplusNormalFont, 200, topTextX+30, color.White)
+		text.Draw(screen, "Press [C] to connect to a room", mplusNormalFont, 200, topTextX+60, color.White)
+		text.Draw(screen, "Press [O] to play online (quick play)", mplusNormalFont, 200, topTextX+90, color.White)
 		return
 	}
 
-	if(gameState == connectToRoomWithToken){
+	if gameState == connectToRoomWithToken {
 		screen.DrawImage(boardImage, op)
-		text.Draw(screen, "Enter the code for room:\n" + token, mplusNormalFont, 200, 50, color.White)
+		text.Draw(screen, "Enter the code for room:\n"+token, mplusNormalFont, 200, 50, color.White)
 		return
 	}
 
-	if(gameState == waitingForConnect || gameState == waitingForToken){
+	if gameState == waitingForConnect || gameState == waitingForToken {
 		screen.DrawImage(boardImage, op)
-		text.Draw(screen, "waiting for opponent...", mplusNormalFont, 200, 80, color.White)
-		if token != ""{
-			text.Draw(screen, "Your token is: " + token, mplusNormalFont, 200, 110, color.White)
+		text.Draw(screen, "waiting server...", mplusNormalFont, 200, 80, color.White)
+		if token != "" {
+			text.Draw(screen, "Your token is: "+token, mplusNormalFont, 200, 110, color.White)
 		}
 		return
 	}
@@ -248,7 +248,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-func drawBalls(screen *ebiten.Image){
+func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
 			if b.board[i][j] == PLAYER_TWO_COLOR {

@@ -51,7 +51,7 @@ connecion that are unused and must be closed
 var toClose chan net.Conn = make(chan net.Conn, 128)
 
 func main() {
-	var quickOpponent net.Conn 
+	var quickOpponent net.Conn
 	connectors := make(chan net.Conn, 128)
 	waiters := make(chan net.Conn, 128)
 	quick := make(chan net.Conn, 128)
@@ -121,9 +121,9 @@ func main() {
 				}
 			}()
 		case conn := <-quick:
-			if quickOpponent == nil{
+			if quickOpponent == nil {
 				quickOpponent = conn
-			}else{
+			} else {
 				go startGame(conn, quickOpponent)
 				quickOpponent = nil
 			}

@@ -12,12 +12,12 @@ const (
 )
 
 type gameInfo struct {
-	conn net.Conn
+	conn    net.Conn
 	waiting bool
-	token string
+	token   string
 }
 
-func createRoom(info chan gameInfo, tokenChan chan string){
+func createRoom(info chan gameInfo, tokenChan chan string) {
 	var waiting bool
 	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
@@ -48,9 +48,9 @@ func createRoom(info chan gameInfo, tokenChan chan string){
 	info <- gameInfo{conn, waiting, ""}
 }
 
-func connectToRoom(token string, info chan gameInfo){
+func connectToRoom(token string, info chan gameInfo) {
 	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
-	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":" + CONN_PORT)
+	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	var waiting bool
 	_, err = fmt.Fprintf(conn, "connect\n")
 	if err != nil {
@@ -74,7 +74,7 @@ func connectToRoom(token string, info chan gameInfo){
 	info <- gameInfo{conn, waiting, ""}
 }
 
-func quickplayLobby(info chan gameInfo){
+func quickplayLobby(info chan gameInfo) {
 	var waiting bool
 	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
@@ -94,6 +94,6 @@ func quickplayLobby(info chan gameInfo){
 		waiting = true
 	} else if msg == "first" {
 		waiting = false
-	} 
+	}
 	info <- gameInfo{conn, waiting, ""}
 }

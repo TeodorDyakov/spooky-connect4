@@ -14,8 +14,7 @@ const (
 	SMALL = -BIG
 )
 
-
-func getAiMove(b *Board, difficulty int)int{
+func getAiMove(b *Board, difficulty int) int {
 	copy := b.copyOfBoard()
 	_, move := alphabeta(copy, true, 0, SMALL, BIG, difficulty)
 	return move
