@@ -33,7 +33,7 @@ func generateToken(conn net.Conn) string {
 	for {
 		token := ""
 		for i := 0; i < 5; i++ {
-			token += string(rune(rand.Intn(26) + 'A'))
+			token += string(rune(rand.Intn(26) + 'a'))
 		}
 		if _, isDup := tokenToConn[token]; !isDup {
 			tok = token
@@ -51,6 +51,7 @@ connecion that are unused and must be closed
 var toClose chan net.Conn = make(chan net.Conn, 128)
 
 func main() {
+	var quickOpponent net.Conn 
 	connectors := make(chan net.Conn, 128)
 	waiters := make(chan net.Conn, 128)
 	quick := make(chan net.Conn, 128)
@@ -120,7 +121,12 @@ func main() {
 				}
 			}()
 		case conn := <-quick:
-			go startGame(conn, <-quick)
+			if quickOpponent == nil{
+				quickOpponent = conn
+			}else{
+				go startGame(conn, quickOpponent)
+				quickOpponent = nil
+			}
 		case conn := <-toClose:
 			go func() {
 				conn.Close()
