@@ -224,9 +224,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if gameState == waitingForConnect || gameState == waitingForToken {
 		screen.DrawImage(boardImage, op)
-		text.Draw(screen, "waiting server...", mplusNormalFont, 200, 80, color.White)
+		text.Draw(screen, "waiting for opponent...", mplusNormalFont, 200, 50, color.White)
 		if token != "" {
-			text.Draw(screen, "Your token is: "+token, mplusNormalFont, 200, 110, color.White)
+			text.Draw(screen, "Your token is: "+token, mplusNormalFont, 200, 80, color.White)
 		}
 		return
 	}
