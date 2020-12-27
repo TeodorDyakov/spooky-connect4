@@ -110,7 +110,7 @@ var mouseClickBuffer chan int = make(chan int)
 var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
 var opponentAnimation bool
 var difficulty int
-var info chan gameInfo = make(chan gameInfo)
+var serverCommunicationChannel chan gameInfo = make(chan gameInfo)
 var token string
 var tokenChan chan string = make(chan string)
 
@@ -143,12 +143,12 @@ func (g *Game) Update() error {
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO) {
 		gameState = waitingForConnect
-		go quickplayLobby(info)
+		go quickplayLobby(serverCommunicationChannel)
 	}
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR) {
 		gameState = waitingForToken
-		go createRoom(info, tokenChan)
+		go createRoom(serverCommunicationChannel, tokenChan)
 	}
 
 	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC) {
@@ -159,7 +159,7 @@ func (g *Game) Update() error {
 		token += string(ebiten.InputChars())
 		if len(token) == 5 {
 			gameState = waitingForConnect
-			go connectToRoom(token, info)
+			go connectToRoom(token, serverCommunicationChannel)
 		}
 	}
 
@@ -173,7 +173,7 @@ func (g *Game) Update() error {
 
 	if gameState == waitingForConnect {
 		select {
-		case gameInfo := <-info:
+		case gameInfo := <-serverCommunicationChannel:
 			if gameInfo.waiting {
 				gameState = opponentTurn
 			} else {
@@ -236,8 +236,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
-	drawBalls(screen)
-
 	screen.DrawImage(boardImage, op)
 	if opponentAnimation {
 		drawGhost(screen)
@@ -246,6 +244,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 	}
+	drawBalls(screen)
+
 }
 
 func drawBalls(screen *ebiten.Image) {
