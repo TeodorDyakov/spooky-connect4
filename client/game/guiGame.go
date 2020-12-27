@@ -70,6 +70,10 @@ const (
 	win
 	lose
 	tie
+	menu
+	waitingForConnect
+	waitingForToken
+	connectToRoomWithToken
 )
 
 const (
@@ -90,7 +94,7 @@ var opponentLastCol int
 var lostGames int
 var wonGames int
 var frameCount int
-var gameState GameState
+var gameState GameState = menu
 
 /*
 whether the fall animation for the given circle was done already
@@ -102,14 +106,13 @@ var playingAgainstAi bool
 var mplusNormalFont font.Face
 var fallY float64 = -tileHeight
 var again chan bool = make(chan bool)
-var readyToStartGui chan int = make(chan int)
 var mouseClickBuffer chan int = make(chan int)
-var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
+var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
 var opponentAnimation bool
-var conn net.Conn
-var playerColor string
-var opponentColor string
 var difficulty int
+var info chan gameInfo = make(chan gameInfo)
+var token string
+var tokenChan chan string = make(chan string)
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -118,19 +121,69 @@ func (g *Game) Update() error {
 		frameCount++
 	}
 
-	if frameCount == fps*SECONDS_TO_MAKE_TURN {
+	if frameCount == fps * SECONDS_TO_MAKE_TURN {
 		os.Exit(1)
 	}
-	if press {
+
+	if gameState == yourTurn && press {
 		mouseX, _ := ebiten.CursorPosition()
 		/*
-			only send click event to buffer if someone is opponentTurn for it
+			only send click event to buffer if someone is waiting for it
 		*/
 		select {
 		case mouseClickBuffer <- xcoordToColumn(mouseX):
 		default:
 		}
 	}
+
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA){
+		gameState = yourTurn
+		go playAgainstAi()
+	}
+
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO){
+		gameState = waitingForConnect
+		go quickplayLobby(info)
+	}
+
+	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR){
+		gameState = waitingForToken
+		go createRoom(info, tokenChan)
+	}
+
+	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC){
+		gameState = connectToRoomWithToken
+	}
+
+	if gameState == connectToRoomWithToken{
+		token += string(ebiten.InputChars())
+		if len(token) == 5{
+			gameState = waitingForConnect
+			go connectToRoom(token, info)
+		}
+	}
+
+	if gameState == waitingForToken{
+		select{
+		case token = <-tokenChan:
+			gameState = waitingForConnect
+		default:
+		}
+	}
+
+	if gameState == waitingForConnect{
+		select{
+		case gameInfo := <- info:
+			if gameInfo.waiting{
+				gameState = opponentTurn
+			}else{
+				gameState = yourTurn
+			}
+			go playMultiplayer(gameInfo.waiting, gameInfo.conn)
+		default:
+		}
+	}
+
 	if isGameOver() && press {
 		mouseX, mouseY := ebiten.CursorPosition()
 		/*check if mouse is in play again area
@@ -150,24 +203,41 @@ func isGameOver() bool {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	var msg string = messages[gameState]
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(boardX, boardY)
+	if gameState == menu{
+		screen.DrawImage(boardImage, op)
+		topTextX := 200
+		text.Draw(screen, "Press [A] to play against AI", mplusNormalFont, 200, topTextX, color.White)
+		text.Draw(screen, "Press [R] to create a room", mplusNormalFont, 200, topTextX + 30, color.White)
+		text.Draw(screen, "Press [C] to connect to a room", mplusNormalFont, 200, topTextX + 60, color.White)
+		text.Draw(screen, "Press [O] to play online (quick play)",mplusNormalFont, 200, topTextX + 90, color.White)		
+		return
+	}
+
+	if(gameState == connectToRoomWithToken){
+		screen.DrawImage(boardImage, op)
+		text.Draw(screen, "Enter the code for room:\n" + token, mplusNormalFont, 200, 50, color.White)
+		return
+	}
+
+	if(gameState == waitingForConnect || gameState == waitingForToken){
+		screen.DrawImage(boardImage, op)
+		text.Draw(screen, "waiting for opponent...", mplusNormalFont, 200, 80, color.White)
+		if token != ""{
+			text.Draw(screen, "Your token is: " + token, mplusNormalFont, 200, 110, color.White)
+		}
+		return
+	}
+
+	var msg string = messages[gameState]
 	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
-	for i := 0; i < len(b.board); i++ {
-		for j := 0; j < len(b.board[0]); j++ {
-			if b.board[i][j] == PLAYER_TWO_COLOR {
-				drawTile(j, i, PLAYER_TWO_COLOR, screen)
-			} else if b.board[i][j] == PLAYER_ONE_COLOR {
-				drawTile(j, i, PLAYER_ONE_COLOR, screen)
-			}
-		}
-	}
+	drawBalls(screen)
 
-	op.GeoM.Translate(boardX, boardY)
 	screen.DrawImage(boardImage, op)
 	if opponentAnimation {
 		drawGhost(screen)
@@ -175,6 +245,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	drawOwl(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
+	}
+}
+
+func drawBalls(screen *ebiten.Image){
+	for i := 0; i < len(b.board); i++ {
+		for j := 0; j < len(b.board[0]); j++ {
+			if b.board[i][j] == PLAYER_TWO_COLOR {
+				drawDisk(j, i, PLAYER_TWO_COLOR, screen)
+			} else if b.board[i][j] == PLAYER_ONE_COLOR {
+				drawDisk(j, i, PLAYER_ONE_COLOR, screen)
+			}
+		}
 	}
 }
 
@@ -197,7 +279,7 @@ func drawOwl(screen *ebiten.Image) {
 	screen.DrawImage(owl, op)
 }
 
-func drawTile(x, y int, player string, screen *ebiten.Image) {
+func drawDisk(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
@@ -240,50 +322,32 @@ choose difficulty and start AI game loop
 */
 
 func playAgainstAi() {
-	fmt.Printf("Choose difficulty (number between %d and %d)", MIN_DIFFICULTY, MAX_DIFFICULTY)
-	var option string
-	fmt.Scan(&option)
-
-	var err error
-	difficulty, err = strconv.Atoi(option)
-
-	for err != nil || difficulty < MIN_DIFFICULTY || difficulty > MAX_DIFFICULTY {
-		fmt.Println("Invalid input! Try again:")
-		fmt.Scan(&option)
-		difficulty, err = strconv.Atoi(option)
-	}
+	difficulty = 10
 	playingAgainstAi = true
-	gameLogic()
+	gameLogic(PLAYER_ONE_COLOR, PLAYER_TWO_COLOR, nil)
 }
 
 /*
 show menu to choose game type - quick or with friend. After user chooses from console
 starts the game loop.
 */
-func playMultiplayer() {
-	/*
-		get signal from server whether we are first or second to play
-	*/
-	var wait bool
-	wait, conn = lobby()
-
+func playMultiplayer(wait bool, conn net.Conn) {
+	playerColor := PLAYER_ONE_COLOR
+	opponentColor := PLAYER_TWO_COLOR
 	if wait {
 		playerColor = PLAYER_TWO_COLOR
 		opponentColor = PLAYER_ONE_COLOR
 		gameState = opponentTurn
 	} else {
-		playerColor = PLAYER_ONE_COLOR
-		opponentColor = PLAYER_TWO_COLOR
 		gameState = yourTurn
 	}
-	readyToStartGui <- 1
-	gameLogic()
+	gameLogic(playerColor, opponentColor, conn)
 }
 
 /*
 plays a full turn of the game, meaning you make a turn, and than thhen the opponent makes one
 */
-func playTurn() {
+func playTurn(playerColor, opponentColor string, conn net.Conn) {
 	if gameState == opponentTurn {
 		var column int
 		if playingAgainstAi {
@@ -330,17 +394,11 @@ func playTurn() {
 	}
 }
 
-func gameLogic() {
-	if playingAgainstAi {
-		playerColor = PLAYER_ONE_COLOR
-		opponentColor = PLAYER_TWO_COLOR
-		readyToStartGui <- 1
-	}
-
+func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 	playAgain := true
 	for playAgain {
 		for !b.gameOver() {
-			playTurn()
+			playTurn(playerColor, opponentColor, conn)
 		}
 		var won bool
 		if b.areFourConnected(playerColor) {
@@ -357,6 +415,7 @@ func gameLogic() {
 		/*
 			wait for user to click play again
 		*/
+		// select{
 		playAgain = <-again
 		/*reset board*/
 		var arr [7][6]bool
@@ -376,24 +435,5 @@ func gameLogic() {
 func StartGuiGame() {
 	ebiten.SetWindowSize(640, 640)
 	ebiten.SetWindowTitle("Connect four")
-
-	fmt.Println("Hello! Welcome to connect four CMD!\n" +
-		"To enter multiplayer lobby press [1]\n" + "To play against AI press [2]")
-
-	var option string
-	fmt.Scan(&option)
-
-	for !(option == "1" || option == "2") {
-		fmt.Println("Unknown command! Try again:")
-		fmt.Scan(&option)
-	}
-
-	if option == "2" {
-		go playAgainstAi()
-	} else {
-		go playMultiplayer()
-	}
-
-	<-readyToStartGui
 	ebiten.RunGame(&Game{})
 }
