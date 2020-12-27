@@ -208,11 +208,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(boardX, boardY)
 	if gameState == menu {
 		screen.DrawImage(boardImage, op)
-		topTextX := 200
-		text.Draw(screen, "Press [A] to play against AI", mplusNormalFont, 200, topTextX, color.White)
-		text.Draw(screen, "Press [R] to create a room", mplusNormalFont, 200, topTextX+30, color.White)
-		text.Draw(screen, "Press [C] to connect to a room", mplusNormalFont, 200, topTextX+60, color.White)
-		text.Draw(screen, "Press [O] to play online (quick play)", mplusNormalFont, 200, topTextX+90, color.White)
+		// topTextX := 200
+		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY -30, color.White)
+		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
+		text.Draw(screen, "[C] - connect to a room", mplusNormalFont, boardX+250, 570, color.White)
+		text.Draw(screen, "[O] - play online (quick play)", mplusNormalFont, boardX + 250, boardY-30, color.White)
 		return
 	}
 
@@ -252,9 +252,9 @@ func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
 			if b.board[i][j] == PLAYER_TWO_COLOR {
-				drawDisk(j, i, PLAYER_TWO_COLOR, screen)
+				drawBall(j, i, PLAYER_TWO_COLOR, screen)
 			} else if b.board[i][j] == PLAYER_ONE_COLOR {
-				drawDisk(j, i, PLAYER_ONE_COLOR, screen)
+				drawBall(j, i, PLAYER_ONE_COLOR, screen)
 			}
 		}
 	}
@@ -279,7 +279,7 @@ func drawOwl(screen *ebiten.Image) {
 	screen.DrawImage(owl, op)
 }
 
-func drawDisk(x, y int, player string, screen *ebiten.Image) {
+func drawBall(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
