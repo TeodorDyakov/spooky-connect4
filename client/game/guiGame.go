@@ -114,7 +114,7 @@ var again chan bool = make(chan bool)
 var mouseClickBuffer chan int = make(chan int)
 var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
 var opponentAnimation bool
-var difficulty int = 1
+var difficulty int
 var serverCommunicationChannel chan gameInfo = make(chan gameInfo)
 var token string
 var tokenChan chan string = make(chan string)
@@ -344,7 +344,7 @@ choose difficulty and start AI game loop
 */
 
 func playAgainstAi() {
-	difficulty = 1
+	difficulty = 10
 	playingAgainstAi = true
 	gameLogic(PLAYER_ONE_COLOR, PLAYER_TWO_COLOR, nil)
 }
