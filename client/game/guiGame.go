@@ -22,6 +22,7 @@ import (
 var bg *ebiten.Image
 var owl *ebiten.Image
 var red *ebiten.Image
+var dot *ebiten.Image
 var ghost *ebiten.Image
 var yellow *ebiten.Image
 var boardImage *ebiten.Image
@@ -49,6 +50,10 @@ func init() {
 		log.Fatal(err)
 	}
 	ghost, _, err = ebitenutil.NewImageFromFile("images/ghost.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dot, _, err = ebitenutil.NewImageFromFile("images/dot.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -242,12 +247,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if opponentAnimation {
 		drawGhost(screen)
 	}
-	
+	drawBalls(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
+		drawWinnerDots(screen)
 	}
-	drawBalls(screen)
-
 }
 
 func drawBalls(screen *ebiten.Image) {
@@ -259,6 +263,21 @@ func drawBalls(screen *ebiten.Image) {
 				drawBall(j, i, PLAYER_ONE_COLOR, screen)
 			}
 		}
+	}
+}
+
+func drawWinnerDots(screen *ebiten.Image){
+	playerOneWin, dotsX, dotsY := b.whereConnected(PLAYER_ONE_COLOR)
+	if !playerOneWin && gameState != tie{
+		_,dotsY,dotsX = b.whereConnected(PLAYER_TWO_COLOR)
+	}else{
+		return
+	}
+	for i := 0; i < 4; i++{
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
+		op.GeoM.Translate(float64(dotsX[i])*tileHeight + 25, float64(dotsY[i])*tileHeight + 25)
+		screen.DrawImage(dot, op)
 	}
 }
 
