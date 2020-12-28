@@ -17,29 +17,20 @@ type gameInfo struct {
 	token   string
 }
 
-func createRoom(info chan gameInfo, tokenChan chan string) {
-	var waiting bool
-	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
+func createRoom(info chan gameInfo) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	if err != nil {
-		panic(err)
+	if err != nil{
+		info <- gameInfo{nil, false, ""}
+		return	
 	}
-	_, err = fmt.Fprintf(conn, "wait\n")
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fprintf(conn, "wait\n")
 	var token string
-	_, err = fmt.Fscan(conn, &token)
-	if err != nil {
-		panic(err)
-	}
-	tokenChan <- token
+	fmt.Fscan(conn, &token)
+	info <- gameInfo{conn, false, token}
 
 	var msg string
-	_, err = fmt.Fscan(conn, &msg)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fscan(conn, &msg)
+	var waiting bool
 	if msg == "second" {
 		waiting = true
 	} else if msg == "first" {
@@ -49,23 +40,16 @@ func createRoom(info chan gameInfo, tokenChan chan string) {
 }
 
 func connectToRoom(token string, info chan gameInfo) {
-	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	var waiting bool
-	_, err = fmt.Fprintf(conn, "connect\n")
-	if err != nil {
-		panic(err)
+	if err != nil{
+		info <- gameInfo{nil, false, ""}
+		return	
 	}
-	_, err = fmt.Fprintf(conn, "%s\n", token)
-	if err != nil {
-		panic(err)
-	}
-
+	fmt.Fprintf(conn, "connect\n")
+	fmt.Fprintf(conn, "%s\n", token)
 	var msg string
-	_, err = fmt.Fscan(conn, &msg)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fscan(conn, &msg)
+	var waiting bool
 	if msg == "second" {
 		waiting = true
 	} else if msg == "first" {
@@ -75,21 +59,15 @@ func connectToRoom(token string, info chan gameInfo) {
 }
 
 func quickplayLobby(info chan gameInfo) {
-	var waiting bool
-	fmt.Println("Connecting to", CONN_TYPE, "server", CONN_HOST+":"+CONN_PORT)
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	if err != nil {
-		panic(err)
+	if err != nil{
+		info <- gameInfo{nil, false, ""}
+		return	
 	}
-	_, err = fmt.Fprintf(conn, "quick\n")
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fprintf(conn, "quick\n")
 	var msg string
-	_, err = fmt.Fscan(conn, &msg)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fscan(conn, &msg)
+	var waiting bool
 	if msg == "second" {
 		waiting = true
 	} else if msg == "first" {

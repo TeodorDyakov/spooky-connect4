@@ -21,13 +21,14 @@ func getAiMove(b *Board, difficulty int) int {
 }
 
 func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int, int) {
+	if depth == max_depth {
+		return 0, -1
+	}
 	if b.areFourConnected(PLAYER_TWO_COLOR) {
 		return BIG - depth, -1
 	} else if b.areFourConnected(PLAYER_ONE_COLOR) {
 		return SMALL + depth, -1
-	} else if depth == max_depth {
-		return 0, -1
-	}
+	} 
 	var value int
 	var bestMove int
 	shuffledColumns := rand.Perm(7)

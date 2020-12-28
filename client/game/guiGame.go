@@ -117,7 +117,6 @@ var opponentAnimation bool
 var difficulty int
 var serverCommunicationChannel chan gameInfo = make(chan gameInfo)
 var token string
-var tokenChan chan string = make(chan string)
 
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
@@ -153,7 +152,7 @@ func (g *Game) Update() error {
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR) {
 		gameState = waitingForToken
-		go createRoom(serverCommunicationChannel, tokenChan)
+		go createRoom(serverCommunicationChannel)
 	}
 
 	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC) {
@@ -170,7 +169,11 @@ func (g *Game) Update() error {
 
 	if gameState == waitingForToken {
 		select {
-		case token = <-tokenChan:
+		case gameInfo := <-serverCommunicationChannel:
+			token = gameInfo.token
+			if gameInfo.conn == nil{
+				gameState = menu
+			}
 			gameState = waitingForConnect
 		default:
 		}
@@ -179,12 +182,16 @@ func (g *Game) Update() error {
 	if gameState == waitingForConnect {
 		select {
 		case gameInfo := <-serverCommunicationChannel:
-			if gameInfo.waiting {
-				gameState = opponentTurn
-			} else {
-				gameState = yourTurn
+			if gameInfo.conn == nil{
+				gameState = menu
+			}else{
+				if gameInfo.waiting {
+					gameState = opponentTurn
+				} else {
+					gameState = yourTurn
+				}
+				go playMultiplayer(gameInfo.waiting, gameInfo.conn)
 			}
-			go playMultiplayer(gameInfo.waiting, gameInfo.conn)
 		default:
 		}
 	}
