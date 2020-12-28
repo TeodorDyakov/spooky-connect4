@@ -28,7 +28,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 		return BIG - depth, -1
 	} else if b.areFourConnected(PLAYER_ONE_COLOR) {
 		return SMALL + depth, -1
-	} 
+	}
 	var value int
 	var bestMove int
 	shuffledColumns := rand.Perm(7)

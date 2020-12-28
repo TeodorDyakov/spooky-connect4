@@ -19,9 +19,9 @@ type gameInfo struct {
 
 func createRoom(info chan gameInfo) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	if err != nil{
+	if err != nil {
 		info <- gameInfo{nil, false, ""}
-		return	
+		return
 	}
 	fmt.Fprintf(conn, "wait\n")
 	var token string
@@ -41,9 +41,9 @@ func createRoom(info chan gameInfo) {
 
 func connectToRoom(token string, info chan gameInfo) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	if err != nil{
+	if err != nil {
 		info <- gameInfo{nil, false, ""}
-		return	
+		return
 	}
 	fmt.Fprintf(conn, "connect\n")
 	fmt.Fprintf(conn, "%s\n", token)
@@ -60,9 +60,9 @@ func connectToRoom(token string, info chan gameInfo) {
 
 func quickplayLobby(info chan gameInfo) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	if err != nil{
+	if err != nil {
 		info <- gameInfo{nil, false, ""}
-		return	
+		return
 	}
 	fmt.Fprintf(conn, "quick\n")
 	var msg string

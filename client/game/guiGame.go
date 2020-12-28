@@ -79,6 +79,7 @@ const (
 	waitingForConnect
 	waitingForToken
 	connectToRoomWithToken
+	cantConnectToServer
 )
 
 const (
@@ -140,6 +141,14 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if gameState == cantConnectToServer {
+		frameCount++
+		if frameCount == 2*fps {
+			frameCount = 0
+			gameState = menu
+		}
+	}
+
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA) {
 		gameState = yourTurn
 		go playAgainstAi()
@@ -170,11 +179,12 @@ func (g *Game) Update() error {
 	if gameState == waitingForToken {
 		select {
 		case gameInfo := <-serverCommunicationChannel:
-			token = gameInfo.token
-			if gameInfo.conn == nil{
-				gameState = menu
+			if gameInfo.conn == nil {
+				gameState = cantConnectToServer
+			} else {
+				token = gameInfo.token
+				gameState = waitingForConnect
 			}
-			gameState = waitingForConnect
 		default:
 		}
 	}
@@ -182,9 +192,10 @@ func (g *Game) Update() error {
 	if gameState == waitingForConnect {
 		select {
 		case gameInfo := <-serverCommunicationChannel:
-			if gameInfo.conn == nil{
-				gameState = menu
-			}else{
+			if gameInfo.conn == nil {
+				token = ""
+				gameState = cantConnectToServer
+			} else {
 				if gameInfo.waiting {
 					gameState = opponentTurn
 				} else {
@@ -218,13 +229,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(bg, nil)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX, boardY)
-	if gameState == menu {
+	if gameState == menu || gameState == cantConnectToServer {
 		screen.DrawImage(boardImage, op)
 		// topTextX := 200
 		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY-30, color.White)
 		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
 		text.Draw(screen, "[C] - connect to a room", mplusNormalFont, boardX+250, 570, color.White)
 		text.Draw(screen, "[O] - play online (quick play)", mplusNormalFont, boardX+250, boardY-30, color.White)
+		if gameState == cantConnectToServer {
+			text.Draw(screen, "Can't connect to server!", mplusNormalFont, 200, 200, color.White)
+		}
 		return
 	}
 
