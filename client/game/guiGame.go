@@ -80,11 +80,10 @@ const (
 	waitingForToken
 	connectToRoomWithToken
 	cantConnectToServer
+	enterAIdifficulty
 )
 
 const (
-	MIN_DIFFICULTY       = 1
-	MAX_DIFFICULTY       = 12
 	SECONDS_TO_MAKE_TURN = 59
 	fps                  = 60
 	tileHeight           = 65
@@ -116,7 +115,7 @@ var mouseClickBuffer chan int = make(chan int)
 var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
 var opponentAnimation bool
 var difficulty int
-var serverCommunicationChannel chan gameInfo = make(chan gameInfo)
+var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
 var token string
 
 func (g *Game) Update() error {
@@ -150,10 +149,22 @@ func (g *Game) Update() error {
 	}
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA) {
-		gameState = yourTurn
-		go playAgainstAi()
+		gameState = enterAIdifficulty
 	}
 
+	if gameState == enterAIdifficulty {
+		diff := string(ebiten.InputChars())
+		if len(diff) == 1 {
+			var err error
+			difficulty, err = strconv.Atoi(diff)
+			if err == nil {
+				difficulty += 3
+				gameState = yourTurn
+				go playAgainstAi()
+			}
+		}
+
+	}
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO) {
 		gameState = waitingForConnect
 		go quickplayLobby(serverCommunicationChannel)
@@ -245,6 +256,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if gameState == connectToRoomWithToken {
 		screen.DrawImage(boardImage, op)
 		text.Draw(screen, "Enter the code for room:\n"+token, mplusNormalFont, 200, 50, color.White)
+		return
+	}
+
+	if gameState == enterAIdifficulty {
+		screen.DrawImage(boardImage, op)
+		text.Draw(screen, "Enter difficulty (1-9)\n"+token, mplusNormalFont, 200, 50, color.White)
 		return
 	}
 
