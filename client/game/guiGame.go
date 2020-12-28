@@ -114,7 +114,7 @@ var again chan bool = make(chan bool)
 var mouseClickBuffer chan int = make(chan int)
 var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
 var opponentAnimation bool
-var difficulty int
+var difficulty int = 1
 var serverCommunicationChannel chan gameInfo = make(chan gameInfo)
 var token string
 var tokenChan chan string = make(chan string)
@@ -214,10 +214,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if gameState == menu {
 		screen.DrawImage(boardImage, op)
 		// topTextX := 200
-		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY -30, color.White)
+		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY-30, color.White)
 		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
 		text.Draw(screen, "[C] - connect to a room", mplusNormalFont, boardX+250, 570, color.White)
-		text.Draw(screen, "[O] - play online (quick play)", mplusNormalFont, boardX + 250, boardY-30, color.White)
+		text.Draw(screen, "[O] - play online (quick play)", mplusNormalFont, boardX+250, boardY-30, color.White)
 		return
 	}
 
@@ -242,7 +242,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
 	screen.DrawImage(boardImage, op)
-	
+
 	drawOwl(screen)
 	if opponentAnimation {
 		drawGhost(screen)
@@ -250,7 +250,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	drawBalls(screen)
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
-		drawWinnerDots(screen)
+		if gameState != tie {
+			drawWinnerDots(screen)
+		}
 	}
 }
 
@@ -266,17 +268,15 @@ func drawBalls(screen *ebiten.Image) {
 	}
 }
 
-func drawWinnerDots(screen *ebiten.Image){
-	playerOneWin, dotsX, dotsY := b.whereConnected(PLAYER_ONE_COLOR)
-	if !playerOneWin && gameState != tie{
-		_,dotsY,dotsX = b.whereConnected(PLAYER_TWO_COLOR)
-	}else{
-		return
+func drawWinnerDots(screen *ebiten.Image) {
+	playerOneWin, dotsY, dotsX := b.whereConnected(PLAYER_ONE_COLOR)
+	if !playerOneWin {
+		_, dotsY, dotsX = b.whereConnected(PLAYER_TWO_COLOR)
 	}
-	for i := 0; i < 4; i++{
+	for i := 0; i < 4; i++ {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
-		op.GeoM.Translate(float64(dotsX[i])*tileHeight + 25, float64(dotsY[i])*tileHeight + 25)
+		op.GeoM.Translate(float64(dotsX[i])*tileHeight+25, float64(dotsY[i])*tileHeight+25)
 		screen.DrawImage(dot, op)
 	}
 }
@@ -344,7 +344,7 @@ choose difficulty and start AI game loop
 */
 
 func playAgainstAi() {
-	difficulty = 10
+	difficulty = 1
 	playingAgainstAi = true
 	gameLogic(PLAYER_ONE_COLOR, PLAYER_TWO_COLOR, nil)
 }

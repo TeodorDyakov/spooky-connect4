@@ -82,7 +82,6 @@ func (b *Board) drop(column int, player string) bool {
 	return false
 }
 
-
 func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 	for j := 0; j < len(b.board[0])-3; j++ {
 		for i := 0; i < len(b.board); i++ {
@@ -90,7 +89,7 @@ func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 				b.board[i][j+1] == player &&
 				b.board[i][j+2] == player &&
 				b.board[i][j+3] == player {
-				return true, [4]int{i,i,i,i}, [4]int{j,j+1,j+2,j+3}
+				return true, [4]int{i, i, i, i}, [4]int{j, j + 1, j + 2, j + 3}
 			}
 		}
 	}
@@ -101,7 +100,7 @@ func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 				b.board[i+1][j] == player &&
 				b.board[i+2][j] == player &&
 				b.board[i+3][j] == player {
-				return true, [4]int{i,i+1,i+2,i+3}, [4]int{j,j,j,j}
+				return true, [4]int{i, i + 1, i + 2, i + 3}, [4]int{j, j, j, j}
 			}
 		}
 	}
@@ -112,7 +111,7 @@ func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 				b.board[i-1][j+1] == player &&
 				b.board[i-2][j+2] == player &&
 				b.board[i-3][j+3] == player {
-				return true, [4]int{i,i-1,i-2,i-3}, [4]int{j,j+1,j+2,j+3}
+				return true, [4]int{i, i - 1, i - 2, i - 3}, [4]int{j, j + 1, j + 2, j + 3}
 			}
 		}
 	}
@@ -123,11 +122,11 @@ func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 				b.board[i-1][j-1] == player &&
 				b.board[i-2][j-2] == player &&
 				b.board[i-3][j-3] == player {
-				return true, [4]int{i,i-1,i-2,i-3}, [4]int{j,j-1,j-2,j-3}
+				return true, [4]int{i, i - 1, i - 2, i - 3}, [4]int{j, j - 1, j - 2, j - 3}
 			}
 		}
 	}
-	return false, [4]int{1,2,3,4}, [4]int{1,2,3,4}
+	return false, [4]int{1, 2, 3, 4}, [4]int{1, 2, 3, 4}
 }
 
 func (b *Board) areFourConnected(player string) bool {
