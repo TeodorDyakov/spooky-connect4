@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"math/rand"
 )
 
 var backgroundImage *ebiten.Image
@@ -26,6 +27,8 @@ var dot *ebiten.Image
 var ghost *ebiten.Image
 var greenBallImage *ebiten.Image
 var boardImage *ebiten.Image
+var bats *ebiten.Image
+var batsX, batsY float64
 
 func loadImageFromFile(relativePath string) *ebiten.Image{
 	var err error
@@ -44,7 +47,9 @@ func init() {
 	owl = loadImageFromFile("images/owl2.png")
 	ghost = loadImageFromFile("images/ghost.png")
 	dot = loadImageFromFile("images/dot.png")
-
+	bats = loadImageFromFile("images/bats.png")
+	batsX = rand.Float64() * 500
+	batsY = rand.Float64() * 500
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
@@ -128,14 +133,6 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if gameState == cantConnectToServer {
-		frameCount++
-		if frameCount == 2*fps {
-			frameCount = 0
-			gameState = menu
-		}
-	}
-
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA) {
 		gameState = enterAIdifficulty
 	}
@@ -206,6 +203,14 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if gameState == cantConnectToServer {
+		frameCount++
+		if frameCount == 2*fps {
+			frameCount = 0
+			gameState = menu
+		}
+	}
+
 	if isGameOver() && press {
 		mouseX, mouseY := ebiten.CursorPosition()
 		/*check if mouse is in play again area
@@ -227,10 +232,14 @@ func isGameOver() bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(backgroundImage, nil)
 	op := &ebiten.DrawImageOptions{}
+
+	op.GeoM.Translate(batsX, batsY)
+	screen.DrawImage(bats, op)
+	op.GeoM.Reset()
+	
 	op.GeoM.Translate(boardX, boardY)
 	if gameState == menu || gameState == cantConnectToServer {
 		screen.DrawImage(boardImage, op)
-		// topTextX := 200
 		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY-30, color.White)
 		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
 		text.Draw(screen, "[C] - connect to a room", mplusNormalFont, boardX+250, 570, color.White)
@@ -266,7 +275,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
-
+		
 	screen.DrawImage(boardImage, op)
 
 	drawOwl(screen)
