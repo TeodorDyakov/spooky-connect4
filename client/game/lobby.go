@@ -17,7 +17,7 @@ type serverMessage struct {
 	token   string
 }
 
-func createRoom(info chan serverMessage) {
+func createRoom(info chan<- serverMessage) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
@@ -39,7 +39,7 @@ func createRoom(info chan serverMessage) {
 	info <- serverMessage{conn, waiting, ""}
 }
 
-func connectToRoom(token string, info chan serverMessage) {
+func connectToRoom(token string, info chan<- serverMessage) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
@@ -58,7 +58,7 @@ func connectToRoom(token string, info chan serverMessage) {
 	info <- serverMessage{conn, waiting, ""}
 }
 
-func quickplayLobby(info chan serverMessage) {
+func quickplayLobby(info chan<- serverMessage) {
 	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}

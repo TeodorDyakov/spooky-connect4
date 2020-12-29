@@ -19,44 +19,32 @@ import (
 	"time"
 )
 
-var bg *ebiten.Image
+var backgroundImage *ebiten.Image
 var owl *ebiten.Image
-var red *ebiten.Image
+var redBallImage *ebiten.Image
 var dot *ebiten.Image
 var ghost *ebiten.Image
-var yellow *ebiten.Image
+var greenBallImage *ebiten.Image
 var boardImage *ebiten.Image
 
-func init() {
+func loadImageFromFile(relativePath string) *ebiten.Image{
 	var err error
-	boardImage, _, err = ebitenutil.NewImageFromFile("images/conn4trans2.png")
+	image, _, err := ebitenutil.NewImageFromFile(relativePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	bg, _, err = ebitenutil.NewImageFromFile("images/bg2.jpeg")
-	if err != nil {
-		log.Fatal(err)
-	}
-	red, _, err = ebitenutil.NewImageFromFile("images/redzwei.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	yellow, _, err = ebitenutil.NewImageFromFile("images/green.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	owl, _, err = ebitenutil.NewImageFromFile("images/owl2.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	ghost, _, err = ebitenutil.NewImageFromFile("images/ghost.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	dot, _, err = ebitenutil.NewImageFromFile("images/dot.png")
-	if err != nil {
-		log.Fatal(err)
-	}
+	return image
+}
+
+func init() {
+	boardImage = loadImageFromFile("images/conn4trans2.png")
+	backgroundImage = loadImageFromFile("images/bg2.jpeg")
+	redBallImage = loadImageFromFile("images/redzwei.png")
+	greenBallImage = loadImageFromFile("images/green.png")
+	owl = loadImageFromFile("images/owl2.png")
+	ghost = loadImageFromFile("images/ghost.png")
+	dot = loadImageFromFile("images/dot.png")
+
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
@@ -112,7 +100,7 @@ var mplusNormalFont font.Face
 var fallY float64 = -tileHeight
 var again chan bool = make(chan bool)
 var mouseClickBuffer chan int = make(chan int)
-var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "", ""}
+var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
 var opponentAnimation bool
 var difficulty int
 var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
@@ -237,7 +225,7 @@ func isGameOver() bool {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.DrawImage(bg, nil)
+	screen.DrawImage(backgroundImage, nil)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX, boardY)
 	if gameState == menu || gameState == cantConnectToServer {
@@ -360,9 +348,9 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 		}
 	}
 	if player == PLAYER_TWO_COLOR {
-		screen.DrawImage(red, op)
+		screen.DrawImage(redBallImage, op)
 	} else {
-		screen.DrawImage(yellow, op)
+		screen.DrawImage(greenBallImage, op)
 	}
 }
 
