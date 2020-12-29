@@ -370,7 +370,6 @@ choose difficulty and start AI game loop
 */
 
 func playAgainstAi() {
-	difficulty = 10
 	playingAgainstAi = true
 	gameLogic(PLAYER_ONE_COLOR, PLAYER_TWO_COLOR, nil)
 }
