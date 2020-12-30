@@ -10,13 +10,13 @@ func init() {
 }
 
 const (
-	BIG   = 100000
-	SMALL = -BIG
+	big   = 100000
+	small = -big
 )
 
 func getAiMove(b *Board, difficulty int) int {
 	copy := b.copyOfBoard()
-	_, move := alphabeta(copy, true, 0, SMALL, BIG, difficulty)
+	_, move := alphabeta(copy, true, 0, small, big, difficulty)
 	return move
 }
 
@@ -25,16 +25,16 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 		return 0, -1
 	}
 	if b.areFourConnected(playerTwoColor) {
-		return BIG - depth, -1
+		return big - depth, -1
 	} else if b.areFourConnected(playerOneColor) {
-		return SMALL + depth, -1
+		return small + depth, -1
 	}
 	var value int
 	var bestMove int
 	shuffledColumns := rand.Perm(7)
 
 	if maximizer {
-		value = SMALL
+		value = small
 		for _, column := range shuffledColumns {
 			if b.drop(column, playerTwoColor) {
 				new_score, _ := alphabeta(b, false, depth+1, alpha, beta, max_depth)
@@ -51,7 +51,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 			}
 		}
 	} else {
-		value = BIG
+		value = big
 		for _, column := range shuffledColumns {
 			if b.drop(column, playerOneColor) {
 				new_score, _ := alphabeta(b, true, depth+1, alpha, beta, max_depth)

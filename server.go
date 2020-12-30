@@ -17,7 +17,7 @@ var tokenGenMutex sync.Mutex
 
 const (
 	connType       = "tcp"
-	TIMEOUT_SECONDS = 60
+	maxTimePerTurnSeconds = 60
 )
 
 var connPort string
@@ -170,7 +170,7 @@ func sendMsg(from, to net.Conn) bool {
 	select {
 	case ok := <-c:
 		return ok
-	case <-time.After(TIMEOUT_SECONDS * time.Second):
+	case <-time.After(maxTimePerTurnSeconds * time.Second):
 		return false
 	}
 	return false
