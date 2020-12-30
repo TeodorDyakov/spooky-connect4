@@ -24,8 +24,9 @@ var CONN_PORT string
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	CONN_PORT = *flag.String("port", "12345", "port on which to run server")
+	cmd  := flag.String("port", "12345", "port on which to run server")
 	flag.Parse()
+	CONN_PORT = *cmd
 }
 
 /*
@@ -65,7 +66,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println("listening on port " + CONN_PORT)
 	go func() {
 		// run loop forever, until exit.
 		for {
