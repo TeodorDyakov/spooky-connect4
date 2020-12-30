@@ -13,7 +13,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
-	"math/rand"
+	// "math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -48,8 +48,8 @@ func init() {
 	ghost = loadImageFromFile("images/ghost.png")
 	dot = loadImageFromFile("images/dot.png")
 	bats = loadImageFromFile("images/bats.png")
-	batsX = rand.Float64() * 640
-	batsY = rand.Float64() * 300
+	batsX = 440
+	batsY = 200
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
@@ -276,13 +276,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(secondsToMakeTurn-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
-	screen.DrawImage(boardImage, op)
-
 	drawOwl(screen)
 	if opponentAnimation {
 		drawGhost(screen)
 	}
+
 	drawBalls(screen)
+	screen.DrawImage(boardImage, op)
+
+
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)
 		if gameState != tie {
