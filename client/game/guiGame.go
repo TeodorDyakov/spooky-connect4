@@ -99,7 +99,7 @@ whether the fall animation for the given circle was done already
 */
 var animated [7][6]bool
 var fallSpeed float64
-var b *Board = NewBoard()
+var board *Board = NewBoard()
 var playingAgainstAi bool
 var mplusNormalFont font.Face
 var fallY float64 = -tileHeight
@@ -292,11 +292,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func drawBalls(screen *ebiten.Image) {
-	for i := 0; i < len(b.board); i++ {
-		for j := 0; j < len(b.board[0]); j++ {
-			if b.board[i][j] == playerTwoColor {
+	for i := 0; i < len(board.board); i++ {
+		for j := 0; j < len(board.board[0]); j++ {
+			if board.board[i][j] == playerTwoColor {
 				drawBall(j, i, playerTwoColor, screen)
-			} else if b.board[i][j] == playerOneColor {
+			} else if board.board[i][j] == playerOneColor {
 				drawBall(j, i, playerOneColor, screen)
 			}
 		}
@@ -304,9 +304,9 @@ func drawBalls(screen *ebiten.Image) {
 }
 
 func drawWinnerDots(screen *ebiten.Image) {
-	playerOneWin, dotsY, dotsX := b.whereConnected(playerOneColor)
+	playerOneWin, dotsY, dotsX := board.whereConnected(playerOneColor)
 	if !playerOneWin {
-		_, dotsY, dotsX = b.whereConnected(playerTwoColor)
+		_, dotsY, dotsX = board.whereConnected(playerTwoColor)
 	}
 	for i := 0; i < 4; i++ {
 		op := &ebiten.DrawImageOptions{}
@@ -407,7 +407,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 	if gameState == opponentTurn {
 		var column int
 		if playingAgainstAi {
-			column = getAiMove(b, difficulty)
+			column = getAiMove(board, difficulty)
 		} else {
 			var msg string
 			_, err := fmt.Fscan(conn, &msg)
@@ -423,7 +423,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 		}
 		opponentLastCol = column
 		opponentAnimation = true
-		b.drop(column, opponentColor)
+		board.drop(column, opponentColor)
 		/*
 			wait for the animation of falling circle to finish
 		*/
@@ -433,7 +433,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 		gameState = yourTurn
 	} else if gameState == yourTurn {
 		column := <-mouseClickBuffer
-		if b.drop(column, playerColor) {
+		if board.drop(column, playerColor) {
 			frameCount = 0
 			gameState = opponentTurn
 			if !playingAgainstAi {
@@ -453,15 +453,15 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 	playAgain := true
 	for playAgain {
-		for !b.gameOver() {
+		for !board.gameOver() {
 			playTurn(playerColor, opponentColor, conn)
 		}
 		var won bool
-		if b.areFourConnected(playerColor) {
+		if board.areFourConnected(playerColor) {
 			gameState = win
 			won = true
 			wonGames++
-		} else if b.areFourConnected(opponentColor) {
+		} else if board.areFourConnected(opponentColor) {
 			gameState = lose
 			won = false
 			lostGames++
@@ -476,7 +476,7 @@ func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 		/*reset board*/
 		var arr [7][6]bool
 		animated = arr
-		b = NewBoard()
+		board = NewBoard()
 		/*
 			if you won the last game you are second in the next
 		*/
