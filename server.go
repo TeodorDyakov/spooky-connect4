@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"flag"
 )
 
 /*
@@ -16,12 +17,15 @@ var tokenGenMutex sync.Mutex
 
 const (
 	CONN_TYPE       = "tcp"
-	CONN_PORT       = "12345"
 	TIMEOUT_SECONDS = 60
 )
 
+var CONN_PORT string
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	CONN_PORT = *flag.String("port", "12345", "port on which to run server")
+	flag.Parse()
 }
 
 /*

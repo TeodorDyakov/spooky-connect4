@@ -3,13 +3,30 @@ package connect4FMI
 import (
 	"fmt"
 	"net"
+	"os"
+	"bufio"
+	"strings"
 )
 
-const (
+var (
+	host string
+	port string
 	CONN_TYPE = "tcp"
-	CONN_PORT = "12345"
-	CONN_HOST = "localhost"
 )
+
+func init(){
+	file, err := os.Open("server_config")
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    scanner.Scan()
+    host = strings.Split(scanner.Text(), ":")[1]
+    scanner.Scan()
+    port = strings.Split(scanner.Text(), ":")[1]
+}
 
 type serverMessage struct {
 	conn    net.Conn
@@ -18,7 +35,7 @@ type serverMessage struct {
 }
 
 func createRoom(info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	conn, err := net.Dial(CONN_TYPE, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
@@ -40,7 +57,7 @@ func createRoom(info chan<- serverMessage) {
 }
 
 func connectToRoom(token string, info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	conn, err := net.Dial(CONN_TYPE, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
@@ -59,7 +76,7 @@ func connectToRoom(token string, info chan<- serverMessage) {
 }
 
 func quickplayLobby(info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	conn, err := net.Dial(CONN_TYPE, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
