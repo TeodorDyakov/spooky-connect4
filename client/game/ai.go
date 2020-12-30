@@ -24,9 +24,9 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 	if depth == max_depth {
 		return 0, -1
 	}
-	if b.areFourConnected(PLAYER_TWO_COLOR) {
+	if b.areFourConnected(playerTwoColor) {
 		return BIG - depth, -1
-	} else if b.areFourConnected(PLAYER_ONE_COLOR) {
+	} else if b.areFourConnected(playerOneColor) {
 		return SMALL + depth, -1
 	}
 	var value int
@@ -36,7 +36,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 	if maximizer {
 		value = SMALL
 		for _, column := range shuffledColumns {
-			if b.drop(column, PLAYER_TWO_COLOR) {
+			if b.drop(column, playerTwoColor) {
 				new_score, _ := alphabeta(b, false, depth+1, alpha, beta, max_depth)
 				b.undoDrop(column)
 
@@ -53,7 +53,7 @@ func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int
 	} else {
 		value = BIG
 		for _, column := range shuffledColumns {
-			if b.drop(column, PLAYER_ONE_COLOR) {
+			if b.drop(column, playerOneColor) {
 				new_score, _ := alphabeta(b, true, depth+1, alpha, beta, max_depth)
 				b.undoDrop(column)
 

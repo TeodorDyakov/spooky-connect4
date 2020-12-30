@@ -77,15 +77,15 @@ const (
 )
 
 const (
-	SECONDS_TO_MAKE_TURN = 59
+	secondsToMakeTurn = 59
 	fps                  = 60
 	tileHeight           = 65
 	tileOffset           = 10
 	boardX               = 84
 	boardY               = 130
 	gravity              = 0.3
-	PLAYER_ONE_COLOR     = "◯"
-	PLAYER_TWO_COLOR     = "⬤"
+	playerOneColor     = "◯"
+	playerTwoColor     = "⬤"
 )
 
 var opponentLastCol int
@@ -118,7 +118,7 @@ func (g *Game) Update() error {
 		frameCount++
 	}
 
-	if frameCount == fps*SECONDS_TO_MAKE_TURN {
+	if frameCount == fps*secondsToMakeTurn {
 		os.Exit(1)
 	}
 
@@ -274,7 +274,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var msg string = messages[gameState]
 	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
-	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
+	text.Draw(screen, "00:"+strconv.Itoa(secondsToMakeTurn-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
 	screen.DrawImage(boardImage, op)
 
@@ -294,19 +294,19 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < len(b.board); i++ {
 		for j := 0; j < len(b.board[0]); j++ {
-			if b.board[i][j] == PLAYER_TWO_COLOR {
-				drawBall(j, i, PLAYER_TWO_COLOR, screen)
-			} else if b.board[i][j] == PLAYER_ONE_COLOR {
-				drawBall(j, i, PLAYER_ONE_COLOR, screen)
+			if b.board[i][j] == playerTwoColor {
+				drawBall(j, i, playerTwoColor, screen)
+			} else if b.board[i][j] == playerOneColor {
+				drawBall(j, i, playerOneColor, screen)
 			}
 		}
 	}
 }
 
 func drawWinnerDots(screen *ebiten.Image) {
-	playerOneWin, dotsY, dotsX := b.whereConnected(PLAYER_ONE_COLOR)
+	playerOneWin, dotsY, dotsX := b.whereConnected(playerOneColor)
 	if !playerOneWin {
-		_, dotsY, dotsX = b.whereConnected(PLAYER_TWO_COLOR)
+		_, dotsY, dotsX = b.whereConnected(playerTwoColor)
 	}
 	for i := 0; i < 4; i++ {
 		op := &ebiten.DrawImageOptions{}
@@ -356,7 +356,7 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 			fallY = -tileHeight
 		}
 	}
-	if player == PLAYER_TWO_COLOR {
+	if player == playerTwoColor {
 		screen.DrawImage(redBallImage, op)
 	} else {
 		screen.DrawImage(greenBallImage, op)
@@ -380,7 +380,7 @@ choose difficulty and start AI game loop
 
 func playAgainstAi() {
 	playingAgainstAi = true
-	gameLogic(PLAYER_ONE_COLOR, PLAYER_TWO_COLOR, nil)
+	gameLogic(playerOneColor, playerTwoColor, nil)
 }
 
 /*
@@ -388,11 +388,11 @@ show menu to choose game type - quick or with friend. After user chooses from co
 starts the game loop.
 */
 func playMultiplayer(wait bool, conn net.Conn) {
-	playerColor := PLAYER_ONE_COLOR
-	opponentColor := PLAYER_TWO_COLOR
+	playerColor := playerOneColor
+	opponentColor := playerTwoColor
 	if wait {
-		playerColor = PLAYER_TWO_COLOR
-		opponentColor = PLAYER_ONE_COLOR
+		playerColor = playerTwoColor
+		opponentColor = playerOneColor
 		gameState = opponentTurn
 	} else {
 		gameState = yourTurn

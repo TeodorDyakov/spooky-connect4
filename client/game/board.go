@@ -12,23 +12,23 @@ type Board struct {
 }
 
 const (
-	BOARD_WIDTH  = 7
-	BOARD_HEIGHT = 6
-	EMPTY_SPOT   = "∟"
+	boardWidth  = 7
+	boardHeight = 6
+	emptySpot   = "∟"
 )
 
 func (b *Board) gameOver() bool {
-	return b.movesMade == 42 || b.areFourConnected(PLAYER_ONE_COLOR) || b.areFourConnected(PLAYER_TWO_COLOR)
+	return b.movesMade == 42 || b.areFourConnected(playerOneColor) || b.areFourConnected(playerTwoColor)
 }
 
 func (b *Board) copyOfBoard() *Board {
 	boardCopy := NewBoard()
-	for i := 0; i < BOARD_HEIGHT; i++ {
-		for j := 0; j < BOARD_WIDTH; j++ {
+	for i := 0; i < boardHeight; i++ {
+		for j := 0; j < boardWidth; j++ {
 			boardCopy.board[i][j] = b.board[i][j]
 		}
 	}
-	boardCopy.col = make([]int, BOARD_WIDTH)
+	boardCopy.col = make([]int, boardWidth)
 	copy(boardCopy.col, b.col)
 	return boardCopy
 }
@@ -37,13 +37,13 @@ func NewBoard() *Board {
 	var b *Board
 	b = new(Board)
 	b.movesMade = 0
-	b.col = make([]int, BOARD_WIDTH)
+	b.col = make([]int, boardWidth)
 	//initialize the connect 4 b.board
-	for i := 0; i < BOARD_HEIGHT; i++ {
-		row := make([]string, BOARD_WIDTH)
+	for i := 0; i < boardHeight; i++ {
+		row := make([]string, boardWidth)
 
 		for i := 0; i < len(row); i++ {
-			row[i] = EMPTY_SPOT
+			row[i] = emptySpot
 		}
 		b.board = append(b.board, row)
 	}
@@ -68,7 +68,7 @@ func (b *Board) printBoard() {
 
 func (b *Board) undoDrop(column int) {
 	b.col[column]--
-	b.board[5-b.col[column]][column] = EMPTY_SPOT
+	b.board[5-b.col[column]][column] = emptySpot
 	b.movesMade--
 }
 

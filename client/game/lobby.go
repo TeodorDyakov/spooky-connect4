@@ -11,7 +11,7 @@ import (
 var (
 	host string
 	port string
-	CONN_TYPE = "tcp"
+	connType = "tcp"
 )
 
 func init(){
@@ -35,7 +35,7 @@ type serverMessage struct {
 }
 
 func createRoom(info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, host+":"+port)
+	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
@@ -57,7 +57,7 @@ func createRoom(info chan<- serverMessage) {
 }
 
 func connectToRoom(token string, info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, host+":"+port)
+	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
@@ -76,7 +76,7 @@ func connectToRoom(token string, info chan<- serverMessage) {
 }
 
 func quickplayLobby(info chan<- serverMessage) {
-	conn, err := net.Dial(CONN_TYPE, host+":"+port)
+	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
 		info <- serverMessage{nil, false, ""}
 		return
