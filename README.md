@@ -15,4 +15,10 @@ To build and run locally:
 git clone https://github.com/TeodorDyakov/spooky-connect4
 cd spooky-connect4/client
 go run -x main.go
-
+```
+To start a server, on given port:
+```
+go build server.go
+./server -port=12345
+```
+To change the server to which the client connects ```cd client``` and edit the ```connectionConfig``` file (default is localhost:12345).
