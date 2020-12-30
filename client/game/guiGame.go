@@ -13,11 +13,11 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
 	"time"
-	"math/rand"
 )
 
 var backgroundImage *ebiten.Image
@@ -30,7 +30,7 @@ var boardImage *ebiten.Image
 var bats *ebiten.Image
 var batsX, batsY float64
 
-func loadImageFromFile(relativePath string) *ebiten.Image{
+func loadImageFromFile(relativePath string) *ebiten.Image {
 	var err error
 	image, _, err := ebitenutil.NewImageFromFile(relativePath)
 	if err != nil {
@@ -78,14 +78,14 @@ const (
 
 const (
 	secondsToMakeTurn = 59
-	fps                  = 60
-	tileHeight           = 65
-	tileOffset           = 10
-	boardX               = 84
-	boardY               = 130
-	gravity              = 0.3
-	playerOneColor     = "◯"
-	playerTwoColor     = "⬤"
+	fps               = 60
+	tileHeight        = 65
+	tileOffset        = 10
+	boardX            = 84
+	boardY            = 130
+	gravity           = 0.3
+	playerOneColor    = "◯"
+	playerTwoColor    = "⬤"
 )
 
 var opponentLastCol int
@@ -236,7 +236,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(batsX, batsY)
 	screen.DrawImage(bats, op)
 	op.GeoM.Reset()
-	
+
 	op.GeoM.Translate(boardX, boardY)
 	if gameState == menu || gameState == cantConnectToServer {
 		screen.DrawImage(boardImage, op)

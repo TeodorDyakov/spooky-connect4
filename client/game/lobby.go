@@ -1,31 +1,31 @@
 package connect4FMI
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
-	"bufio"
 	"strings"
 )
 
 var (
-	host string
-	port string
+	host     string
+	port     string
 	connType = "tcp"
 )
 
-func init(){
+func init() {
 	file, err := os.Open("connectionConfig")
-    if err != nil {
-        panic(err)
-    }
-    defer file.Close()
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
-    scanner := bufio.NewScanner(file)
-    scanner.Scan()
-    host = strings.Split(scanner.Text(), ":")[1]
-    scanner.Scan()
-    port = strings.Split(scanner.Text(), ":")[1]
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	host = strings.Split(scanner.Text(), ":")[1]
+	scanner.Scan()
+	port = strings.Split(scanner.Text(), ":")[1]
 }
 
 type serverMessage struct {

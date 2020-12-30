@@ -1,12 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
-	"flag"
 )
 
 /*
@@ -16,7 +16,7 @@ var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
 var tokenGenMutex sync.Mutex
 
 const (
-	connType       = "tcp"
+	connType              = "tcp"
 	maxTimePerTurnSeconds = 60
 )
 
@@ -24,7 +24,7 @@ var connPort string
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	cmd  := flag.String("port", "12345", "port on which to run server")
+	cmd := flag.String("port", "12345", "port on which to run server")
 	flag.Parse()
 	connPort = *cmd
 }
