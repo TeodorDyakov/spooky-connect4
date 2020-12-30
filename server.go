@@ -16,17 +16,17 @@ var tokenToConn map[string]net.Conn = make(map[string]net.Conn)
 var tokenGenMutex sync.Mutex
 
 const (
-	CONN_TYPE       = "tcp"
+	connType       = "tcp"
 	TIMEOUT_SECONDS = 60
 )
 
-var CONN_PORT string
+var connPort string
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	cmd  := flag.String("port", "12345", "port on which to run server")
 	flag.Parse()
-	CONN_PORT = *cmd
+	connPort = *cmd
 }
 
 /*
@@ -62,11 +62,11 @@ func main() {
 	quick := make(chan net.Conn, 128)
 
 	// Start the server and listen for incoming connections.
-	listener, err := net.Listen("tcp", ":"+CONN_PORT)
+	listener, err := net.Listen("tcp", ":"+connPort)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("listening on port " + CONN_PORT)
+	fmt.Println("listening on port " + connPort)
 	go func() {
 		// run loop forever, until exit.
 		for {
