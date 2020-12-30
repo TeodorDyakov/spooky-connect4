@@ -15,7 +15,7 @@ var (
 )
 
 func init(){
-	file, err := os.Open("server_config")
+	file, err := os.Open("connectionConfig")
     if err != nil {
         panic(err)
     }
