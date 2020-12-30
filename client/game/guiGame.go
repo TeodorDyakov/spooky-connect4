@@ -48,8 +48,8 @@ func init() {
 	ghost = loadImageFromFile("images/ghost.png")
 	dot = loadImageFromFile("images/dot.png")
 	bats = loadImageFromFile("images/bats.png")
-	batsX = rand.Float64() * 500
-	batsY = rand.Float64() * 500
+	batsX = rand.Float64() * 640
+	batsY = rand.Float64() * 300
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
@@ -275,7 +275,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(SECONDS_TO_MAKE_TURN-frameCount/fps), mplusNormalFont, 500, 580, color.White)
-		
+
 	screen.DrawImage(boardImage, op)
 
 	drawOwl(screen)
