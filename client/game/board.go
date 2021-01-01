@@ -72,7 +72,7 @@ func (b *Board) undoDrop(column int) {
 	b.movesMade--
 }
 
-func (b *Board) drop(column int, player string) bool {
+func (b *Board) Drop(column int, player string) bool {
 	if column < len(b.board[0]) && (column >= 0) && b.col[column] < len(b.board) {
 		b.board[5-b.col[column]][column] = player
 		b.col[column]++
@@ -82,7 +82,7 @@ func (b *Board) drop(column int, player string) bool {
 	return false
 }
 
-func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
+func (b *Board) WhereConnected(player string) (bool, [4]int, [4]int) {
 	for j := 0; j < len(b.board[0])-3; j++ {
 		for i := 0; i < len(b.board); i++ {
 			if b.board[i][j] == player &&
@@ -130,6 +130,6 @@ func (b *Board) whereConnected(player string) (bool, [4]int, [4]int) {
 }
 
 func (b *Board) areFourConnected(player string) bool {
-	connected, _, _ := b.whereConnected(player)
+	connected, _, _ := b.WhereConnected(player)
 	return connected
 }

@@ -1,11 +1,9 @@
 package connect4FMI
 
 import (
-	"bufio"
 	"fmt"
 	"net"
-	"os"
-	"strings"
+	"flag"
 )
 
 var (
@@ -15,17 +13,13 @@ var (
 )
 
 func init() {
-	file, err := os.Open("connectionConfig")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+	cmd := flag.String("host", "localhost", "ip of host")
+	flag.Parse()
+	host = *cmd
 
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	host = strings.Split(scanner.Text(), ":")[1]
-	scanner.Scan()
-	port = strings.Split(scanner.Text(), ":")[1]
+	cmd = flag.String("port", "12345", "port on which to run server")
+	flag.Parse()
+	port = *cmd
 }
 
 type serverMessage struct {

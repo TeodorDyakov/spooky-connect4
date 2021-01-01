@@ -1,6 +1,7 @@
 package connect4FMI
 
 import (
+	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -13,11 +14,12 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
-	// "math/rand"
+	"bytes"
 	"net"
 	"os"
 	"strconv"
 	"time"
+	"image"
 )
 
 var backgroundImage *ebiten.Image
@@ -40,14 +42,30 @@ func loadImageFromFile(relativePath string) *ebiten.Image {
 }
 
 func init() {
-	boardImage = loadImageFromFile("images/conn4trans2.png")
-	backgroundImage = loadImageFromFile("images/bg2.jpeg")
-	redBallImage = loadImageFromFile("images/redzwei.png")
-	greenBallImage = loadImageFromFile("images/green.png")
-	owl = loadImageFromFile("images/owl2.png")
-	ghost = loadImageFromFile("images/ghost.png")
-	dot = loadImageFromFile("images/dot.png")
-	bats = loadImageFromFile("images/bats.png")
+	img, _, _ := image.Decode(bytes.NewReader(resources.Ghost_png))
+	ghost = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Background_png))
+	backgroundImage = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Red_png))
+	redBallImage = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Green_png))
+	greenBallImage = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Owl_png))
+	owl = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Dot_png))
+	dot = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Bats_png))
+	bats = ebiten.NewImageFromImage(img)
+	
+	img, _, _ = image.Decode(bytes.NewReader(resources.Board_png))
+	boardImage = ebiten.NewImageFromImage(img)
+
 	batsX = 440
 	batsY = 200
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
@@ -306,9 +324,9 @@ func drawBalls(screen *ebiten.Image) {
 }
 
 func drawWinnerDots(screen *ebiten.Image) {
-	playerOneWin, dotsY, dotsX := board.whereConnected(playerOneColor)
+	playerOneWin, dotsY, dotsX := board.WhereConnected(playerOneColor)
 	if !playerOneWin {
-		_, dotsY, dotsX = board.whereConnected(playerTwoColor)
+		_, dotsY, dotsX = board.WhereConnected(playerTwoColor)
 	}
 	for i := 0; i < 4; i++ {
 		op := &ebiten.DrawImageOptions{}
@@ -370,7 +388,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 /*
-on which column to drop based on x coordinate of click
+on which column to Drop based on x coordinate of click
 */
 func xcoordToColumn(x int) int {
 	return int(float64(x-tileOffset-boardX) / tileHeight)
@@ -425,7 +443,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 		}
 		opponentLastCol = column
 		opponentAnimation = true
-		board.drop(column, opponentColor)
+		board.Drop(column, opponentColor)
 		/*
 			wait for the animation of falling circle to finish
 		*/
@@ -435,7 +453,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 		gameState = yourTurn
 	} else if gameState == yourTurn {
 		column := <-mouseClickBuffer
-		if board.drop(column, playerColor) {
+		if board.Drop(column, playerColor) {
 			frameCount = 0
 			gameState = opponentTurn
 			if !playingAgainstAi {
