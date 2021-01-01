@@ -20,4 +20,7 @@ To start a server, on given port:
 ```
 go run server.go -port=12345
 ```
-To change the server to which the client connects ```cd client``` and edit the ```connectionConfig``` file (default is localhost:12345).
+To change the server to which the client connects(default is localhost:12345):
+```
+go run main.go -host=localhost -port=12345
+```
