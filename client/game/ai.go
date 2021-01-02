@@ -14,12 +14,15 @@ const (
 	small = -big
 )
 
-func getAiMove(b *Board, difficulty int) int {
+//getAiMove returns the best move for the given board position based on the strength of the AI
+func getAiMove(b *Board, strength int) int {
 	copy := b.copyOfBoard()
-	_, move := alphabeta(copy, true, 0, small, big, difficulty)
+	_, move := alphabeta(copy, true, 0, small, big, strength)
 	return move
 }
 
+//alphabeta implenets the alphabeta algorithm and returns the score of the given board position
+//and the best move for the given board position
 func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int, int) {
 	if depth == max_depth {
 		return 0, -1

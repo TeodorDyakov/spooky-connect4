@@ -5,7 +5,6 @@ import (
 	"fmt"
 	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -15,7 +14,6 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
-	"log"
 	"net"
 	"os"
 	"strconv"
@@ -31,15 +29,6 @@ var greenBallImage *ebiten.Image
 var boardImage *ebiten.Image
 var bats *ebiten.Image
 var batsX, batsY float64
-
-func loadImageFromFile(relativePath string) *ebiten.Image {
-	var err error
-	image, _, err := ebitenutil.NewImageFromFile(relativePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return image
-}
 
 func init() {
 	img, _, _ := image.Decode(bytes.NewReader(resources.Ghost_png))
@@ -112,23 +101,38 @@ var wonGames int
 var frameCount int
 var gameState GameState = menu
 
-/*
-whether the fall animation for the given circle was done already
-*/
+//whether the fall animation for the given ball was done already
 var animated [7][6]bool
+
+//the speed of a falling ball
 var fallSpeed float64
 var board *Board = NewBoard()
 var playingAgainstAi bool
 var mplusNormalFont font.Face
+
+//the Y coordinate of a falling ball
 var fallY float64 = -tileHeight
+
+//channel used to wait for user to clickc playAgains
 var again chan bool = make(chan bool)
+
+//channel used to send mouse clicks during game, idicating which column is clicked by user
 var mouseClickBuffer chan int = make(chan int)
+
+//messages shown during a match of the game
 var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
+
+//whether an opponent is running
 var opponentAnimation bool
 var difficulty int
+
+//this is used to receive information for setting up an online game
 var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
+
+//the token with which a user connects or the token received by server
 var token string
 
+//the main logic of the game, changing game state moving between menus and starting a match of the game
 func (g *Game) Update() error {
 	press := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
 
@@ -166,8 +170,8 @@ func (g *Game) Update() error {
 				go playAgainstAi()
 			}
 		}
-
 	}
+
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO) {
 		gameState = waitingForConnect
 		go quickplayLobby(serverCommunicationChannel)
@@ -243,10 +247,12 @@ func (g *Game) Update() error {
 	return nil
 }
 
+//isGameOver returns whether the game is over
 func isGameOver() bool {
 	return gameState == tie || gameState == win || gameState == lose
 }
 
+//this fucntion draws the graphic of the game based on the gameState
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(backgroundImage, nil)
 	op := &ebiten.DrawImageOptions{}
@@ -310,6 +316,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
+//drawBalls draws all the balls to the screen
 func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < len(board.board); i++ {
 		for j := 0; j < len(board.board[0]); j++ {
@@ -322,6 +329,7 @@ func drawBalls(screen *ebiten.Image) {
 	}
 }
 
+//drawWinnerDors draws the dots indicating where the winner has four connected balls
 func drawWinnerDots(screen *ebiten.Image) {
 	playerOneWin, dotsY, dotsX := board.WhereConnected(playerOneColor)
 	if !playerOneWin {
@@ -335,12 +343,14 @@ func drawWinnerDots(screen *ebiten.Image) {
 	}
 }
 
+//drawGhost draws the ghost image to the screen
 func drawGhost(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(opponentLastCol)*tileHeight+boardX+10, boardY-75)
 	screen.DrawImage(ghost, op)
 }
 
+//drawOwl draws the owl image to the screen
 func drawOwl(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	mouseX, _ := ebiten.CursorPosition()
@@ -355,6 +365,7 @@ func drawOwl(screen *ebiten.Image) {
 	screen.DrawImage(owl, op)
 }
 
+//drawBall draws the ball to the screen
 func drawBall(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
@@ -386,30 +397,23 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 640, 640
 }
 
-/*
-on which column to Drop based on x coordinate of click
-*/
+//xcoordToColumn returns the column correspondidng which contains the x coordinate
 func xcoordToColumn(x int) int {
 	return int(float64(x-tileOffset-boardX) / tileHeight)
 }
 
-/*
-choose difficulty and start AI game loop
-*/
-
+//playAgainstAI starts a game against an AI
 func playAgainstAi() {
 	playingAgainstAi = true
 	gameLogic(playerOneColor, playerTwoColor, nil)
 }
 
-/*
-show menu to choose game type - quick or with friend. After user chooses from console
-starts the game loop.
-*/
-func playMultiplayer(wait bool, conn net.Conn) {
+//playMulitplayer initiliazes the color of player and opponent based on whether the player isSecond and
+//stars a mutiplayer mathc on the given connection
+func playMultiplayer(isSecond bool, conn net.Conn) {
 	playerColor := playerOneColor
 	opponentColor := playerTwoColor
-	if wait {
+	if isSecond {
 		playerColor = playerTwoColor
 		opponentColor = playerOneColor
 		gameState = opponentTurn
@@ -419,9 +423,8 @@ func playMultiplayer(wait bool, conn net.Conn) {
 	gameLogic(playerColor, opponentColor, conn)
 }
 
-/*
-plays a full turn of the game, meaning you make a turn, and than thhen the opponent makes one
-*/
+//playTurn executes the logic for a move by one player then a move the next player
+//conn is the connection needed for multiplayer
 func playTurn(playerColor, opponentColor string, conn net.Conn) {
 	if gameState == opponentTurn {
 		var column int
@@ -469,6 +472,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 	}
 }
 
+//plays a full match of the game than waits for the user to click play Again and starts another game
 func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 	playAgain := true
 	for playAgain {
@@ -490,7 +494,6 @@ func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 		/*
 			wait for user to click play again
 		*/
-		// select{
 		playAgain = <-again
 		/*reset board*/
 		var arr [7][6]bool
@@ -507,6 +510,7 @@ func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 	}
 }
 
+//StartGuiGame initializes the game and the gui, this is the entry point for the whole game
 func StartGuiGame() {
 	ebiten.SetWindowSize(640, 640)
 	ebiten.SetWindowTitle("Connect four")
