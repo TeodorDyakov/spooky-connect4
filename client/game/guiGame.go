@@ -1,8 +1,9 @@
 package connect4FMI
 
 import (
-	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
+	"bytes"
 	"fmt"
+	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -10,16 +11,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+	"image"
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
-	"bytes"
 	"net"
 	"os"
 	"strconv"
 	"time"
-	"image"
 )
 
 var backgroundImage *ebiten.Image
@@ -44,25 +44,25 @@ func loadImageFromFile(relativePath string) *ebiten.Image {
 func init() {
 	img, _, _ := image.Decode(bytes.NewReader(resources.Ghost_png))
 	ghost = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Background_png))
 	backgroundImage = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Red_png))
 	redBallImage = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Green_png))
 	greenBallImage = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Owl_png))
 	owl = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Dot_png))
 	dot = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Bats_png))
 	bats = ebiten.NewImageFromImage(img)
-	
+
 	img, _, _ = image.Decode(bytes.NewReader(resources.Board_png))
 	boardImage = ebiten.NewImageFromImage(img)
 
@@ -301,7 +301,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	drawBalls(screen)
 	screen.DrawImage(boardImage, op)
-
 
 	if isGameOver() {
 		text.Draw(screen, "Click here\nto play again", mplusNormalFont, 250, 580, color.White)

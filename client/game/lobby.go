@@ -1,9 +1,9 @@
 package connect4FMI
 
 import (
+	"flag"
 	"fmt"
 	"net"
-	"flag"
 )
 
 var (
@@ -13,13 +13,11 @@ var (
 )
 
 func init() {
-	cmd := flag.String("host", "localhost", "ip of host")
+	hostPtr := flag.String("host", "localhost", "ip of host")
+	portPtr := flag.String("port", "12345", "port on which to run server")
 	flag.Parse()
-	host = *cmd
-
-	cmd = flag.String("port", "12345", "port on which to run server")
-	flag.Parse()
-	port = *cmd
+	host = *hostPtr
+	port = *portPtr
 }
 
 type serverMessage struct {

@@ -126,7 +126,7 @@ func (b *Board) WhereConnected(player string) (bool, [4]int, [4]int) {
 			}
 		}
 	}
-	return false, [4]int{1, 2, 3, 4}, [4]int{1, 2, 3, 4}
+	return false, [4]int{-1, -1, -1, -1}, [4]int{-1, -1, -1, -1}
 }
 
 func (b *Board) areFourConnected(player string) bool {
