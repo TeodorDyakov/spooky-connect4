@@ -101,19 +101,19 @@ var wonGames int
 var frameCount int
 var gameState GameState = menu
 
-//whether the fall animation for the given ball was done already
-var animated [7][6]bool
+//wasFallAnimated already for the ball which should fall at the given row and column
+var wasFallAnimated [7][6]bool
 
-//the speed of a falling ball
+//fallSpeed of a falling ball
 var fallSpeed float64
 var board *Board = NewBoard()
 var playingAgainstAi bool
 var mplusNormalFont font.Face
 
-//the Y coordinate of a falling ball
+//fallY - the Y coordinate of the falling ball
 var fallY float64 = -tileHeight
 
-//channel used to wait for user to clickc playAgains
+//again - channel used to wait for user to clicck playAgain
 var again chan bool = make(chan bool)
 
 //channel used to send mouse clicks during game, idicating which column is clicked by user
@@ -124,6 +124,7 @@ var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You
 
 //whether an opponent is running
 var opponentAnimation bool
+//difficutly of the AI
 var difficulty int
 
 //this is used to receive information for setting up an online game
@@ -371,7 +372,7 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
 	destY := tileOffset + float64(y)*tileHeight
 
-	if animated[x][y] {
+	if wasFallAnimated[x][y] {
 		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
 	} else {
 		fallY += fallSpeed
@@ -379,10 +380,10 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 		if fallY > destY {
 			fallY = destY
 			fallSpeed = 0
-			animated[x][y] = true
+			wasFallAnimated[x][y] = true
 		}
 		op.GeoM.Translate(float64(x)*tileHeight, fallY)
-		if animated[x][y] {
+		if wasFallAnimated[x][y] {
 			fallY = -tileHeight
 		}
 	}
@@ -497,7 +498,7 @@ func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 		playAgain = <-again
 		/*reset board*/
 		var arr [7][6]bool
-		animated = arr
+		wasFallAnimated = arr
 		board = NewBoard()
 		/*
 			if you won the last game you are second in the next
