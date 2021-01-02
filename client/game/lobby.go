@@ -22,7 +22,7 @@ func init() {
 
 type serverMessage struct {
 	conn    net.Conn
-	waiting bool
+	isSecond bool
 	token   string
 }
 
@@ -39,13 +39,13 @@ func createRoom(info chan<- serverMessage) {
 
 	var msg string
 	fmt.Fscan(conn, &msg)
-	var waiting bool
+	var isSecond bool
 	if msg == "second" {
-		waiting = true
+		isSecond = true
 	} else if msg == "first" {
-		waiting = false
+		isSecond = false
 	}
-	info <- serverMessage{conn, waiting, ""}
+	info <- serverMessage{conn, isSecond, ""}
 }
 
 func connectToRoom(token string, info chan<- serverMessage) {
@@ -58,13 +58,13 @@ func connectToRoom(token string, info chan<- serverMessage) {
 	fmt.Fprintf(conn, "%s\n", token)
 	var msg string
 	fmt.Fscan(conn, &msg)
-	var waiting bool
+	var isSecond bool
 	if msg == "second" {
-		waiting = true
+		isSecond = true
 	} else if msg == "first" {
-		waiting = false
+		isSecond = false
 	}
-	info <- serverMessage{conn, waiting, ""}
+	info <- serverMessage{conn, isSecond, ""}
 }
 
 func quickplayLobby(info chan<- serverMessage) {
@@ -76,11 +76,11 @@ func quickplayLobby(info chan<- serverMessage) {
 	fmt.Fprintf(conn, "quick\n")
 	var msg string
 	fmt.Fscan(conn, &msg)
-	var waiting bool
+	var isSecond bool
 	if msg == "second" {
-		waiting = true
+		isSecond = true
 	} else if msg == "first" {
-		waiting = false
+		isSecond = false
 	}
-	info <- serverMessage{conn, waiting, ""}
+	info <- serverMessage{conn, isSecond, ""}
 }

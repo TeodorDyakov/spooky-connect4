@@ -113,11 +113,14 @@ var mplusNormalFont font.Face
 //fallY - the Y coordinate of the falling ball
 var fallY float64 = -tileHeight
 
-//again - channel used to wait for user to clicck playAgain
-var again chan bool = make(chan bool)
+//again - channel used to wait for user to click playAgain button
+var playAgainClick chan struct{} = make(chan struct{})
 
 //channel used to send mouse clicks during game, idicating which column is clicked by user
-var mouseClickBuffer chan int = make(chan int)
+var columnClicked chan int = make(chan int)
+
+//this is used to receive information for setting up an online game
+var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
 
 //messages shown during a match of the game
 var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
@@ -126,9 +129,6 @@ var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You
 var opponentAnimation bool
 //difficutly of the AI
 var difficulty int
-
-//this is used to receive information for setting up an online game
-var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
 
 //the token with which a user connects or the token received by server
 var token string
@@ -151,7 +151,7 @@ func (g *Game) Update() error {
 			only send click event to buffer if someone is waiting for it
 		*/
 		select {
-		case mouseClickBuffer <- xcoordToColumn(mouseX):
+		case columnClicked <- xcoordToColumn(mouseX):
 		default:
 		}
 	}
@@ -215,12 +215,12 @@ func (g *Game) Update() error {
 				token = ""
 				gameState = cantConnectToServer
 			} else {
-				if gameInfo.waiting {
+				if gameInfo.isSecond {
 					gameState = opponentTurn
 				} else {
 					gameState = yourTurn
 				}
-				go playMultiplayer(gameInfo.waiting, gameInfo.conn)
+				go playMultiplayer(gameInfo.isSecond, gameInfo.conn)
 			}
 		default:
 		}
@@ -240,7 +240,7 @@ func (g *Game) Update() error {
 		 */
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
 			select {
-			case again <- true:
+			case playAgainClick <- struct{}{}:
 			default:
 			}
 		}
@@ -455,7 +455,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 		frameCount = 0
 		gameState = yourTurn
 	} else if gameState == yourTurn {
-		column := <-mouseClickBuffer
+		column := <-columnClicked
 		if board.Drop(column, playerColor) {
 			frameCount = 0
 			gameState = opponentTurn
@@ -475,8 +475,7 @@ func playTurn(playerColor, opponentColor string, conn net.Conn) {
 
 //plays a full match of the game than waits for the user to click play Again and starts another game
 func gameLogic(playerColor, opponentColor string, conn net.Conn) {
-	playAgain := true
-	for playAgain {
+	for {
 		for !board.gameOver() {
 			playTurn(playerColor, opponentColor, conn)
 		}
@@ -495,7 +494,7 @@ func gameLogic(playerColor, opponentColor string, conn net.Conn) {
 		/*
 			wait for user to click play again
 		*/
-		playAgain = <-again
+		<-playAgainClick
 		/*reset board*/
 		var arr [7][6]bool
 		wasFallAnimated = arr
