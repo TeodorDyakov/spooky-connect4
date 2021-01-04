@@ -16,6 +16,7 @@ import (
 	_ "image/png"
 	"net"
 	"os"
+	"log"
 	"strconv"
 	"time"
 )
@@ -30,31 +31,23 @@ var boardImage *ebiten.Image
 var bats *ebiten.Image
 var batsX, batsY float64
 
+func byteArrayToEbitenImage(arr []byte)*ebiten.Image{
+	img, _, err := image.Decode(bytes.NewReader(arr))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ebiten.NewImageFromImage(img)
+}
+
 func init() {
-	img, _, _ := image.Decode(bytes.NewReader(resources.Ghost_png))
-	ghost = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Background_png))
-	backgroundImage = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Red_png))
-	redBallImage = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Green_png))
-	greenBallImage = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Owl_png))
-	owl = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Dot_png))
-	dot = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Bats_png))
-	bats = ebiten.NewImageFromImage(img)
-
-	img, _, _ = image.Decode(bytes.NewReader(resources.Board_png))
-	boardImage = ebiten.NewImageFromImage(img)
-
+	ghost = byteArrayToEbitenImage(resources.Ghost_png)
+	backgroundImage = byteArrayToEbitenImage(resources.Background_png)
+	redBallImage = byteArrayToEbitenImage(resources.Red_png)
+	greenBallImage = byteArrayToEbitenImage(resources.Green_png)
+	owl = byteArrayToEbitenImage(resources.Owl_png)
+	dot = byteArrayToEbitenImage(resources.Dot_png)
+	bats = byteArrayToEbitenImage(resources.Bats_png)
+	boardImage = byteArrayToEbitenImage(resources.Board_png)
 	batsX = 440
 	batsY = 200
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
@@ -362,7 +355,7 @@ func drawOwl(screen *ebiten.Image) {
 		mouseX = boardX + 7*tileHeight
 	}
 	owlX := xcoordToColumn(mouseX)*tileHeight + boardX
-	op.GeoM.Translate(float64(owlX), boardY-75)
+	op.GeoM.Translate(float64(owlX), boardY-80)
 	screen.DrawImage(owl, op)
 }
 
