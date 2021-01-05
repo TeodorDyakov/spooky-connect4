@@ -31,7 +31,7 @@ var boardImage *ebiten.Image
 var bats *ebiten.Image
 var batsX, batsY float64
 
-func byteArrayToEbitenImage(arr []byte)*ebiten.Image{
+func byteSliceToEbitenImage(arr []byte)*ebiten.Image{
 	img, _, err := image.Decode(bytes.NewReader(arr))
 	if err != nil {
 		log.Fatal(err)
@@ -40,14 +40,14 @@ func byteArrayToEbitenImage(arr []byte)*ebiten.Image{
 }
 
 func init() {
-	ghost = byteArrayToEbitenImage(resources.Ghost_png)
-	backgroundImage = byteArrayToEbitenImage(resources.Background_png)
-	redBallImage = byteArrayToEbitenImage(resources.Red_png)
-	greenBallImage = byteArrayToEbitenImage(resources.Green_png)
-	owl = byteArrayToEbitenImage(resources.Owl_png)
-	dot = byteArrayToEbitenImage(resources.Dot_png)
-	bats = byteArrayToEbitenImage(resources.Bats_png)
-	boardImage = byteArrayToEbitenImage(resources.Board_png)
+	ghost = byteSliceToEbitenImage(resources.Ghost_png)
+	backgroundImage = byteSliceToEbitenImage(resources.Background_png)
+	redBallImage = byteSliceToEbitenImage(resources.Red_png)
+	greenBallImage = byteSliceToEbitenImage(resources.Green_png)
+	owl = byteSliceToEbitenImage(resources.Owl_png)
+	dot = byteSliceToEbitenImage(resources.Dot_png)
+	bats = byteSliceToEbitenImage(resources.Bats_png)
+	boardImage = byteSliceToEbitenImage(resources.Board_png)
 	batsX = 440
 	batsY = 200
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
@@ -83,7 +83,7 @@ const (
 	tileOffset        = 10
 	boardX            = 84
 	boardY            = 130
-	gravity           = 0.3
+	gravity           = 0.5
 	playerOneColor    = "◯"
 	playerTwoColor    = "⬤"
 )
