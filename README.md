@@ -1,4 +1,4 @@
-# Connect four multiplayer server
+
 This is an implementation of the [Connect four](https://en.wikipedia.org/wiki/Connect_Four) game, made for the "Introduction to Go" course at FMI. There is a server, a client with a GUI and you can play against a friend or AI. For the GUI I have used the [Ebiten](https://github.com/hajimehoshi/ebiten) game engine.
 
 ![screen](client/images/screen.jpg)
