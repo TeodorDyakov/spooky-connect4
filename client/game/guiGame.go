@@ -88,6 +88,7 @@ const (
 	playerTwoColor    = "⬤"
 )
 
+//the column the opponent has chosen last
 var opponentLastCol int
 var lostGames int
 var wonGames int

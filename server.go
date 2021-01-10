@@ -29,9 +29,8 @@ func init() {
 	connPort = *cmd
 }
 
-/*
-generate a unique token for the connection and return it
-*/
+
+//generateToken generates a unique token to be used for a game room identifier
 func generateToken(conn net.Conn) string {
 	tokenGenMutex.Lock()
 	var tok string
@@ -57,8 +56,11 @@ var toClose chan net.Conn = make(chan net.Conn, 128)
 
 func main() {
 	var quickOpponent net.Conn
+	//those who connect tot a room with a token
 	connectors := make(chan net.Conn, 128)
+	//those who created a room and wait for ssomeone to connect to them
 	waiters := make(chan net.Conn, 128)
+	//those who wait for a random player to connect to them
 	quick := make(chan net.Conn, 128)
 
 	// Start the server and listen for incoming connections.
@@ -142,11 +144,10 @@ func main() {
 
 }
 
-/*
-read a string from the connection "from" and sent it to "to"
-if it takes more than 60 seconds return false. if the msg is "end" it means the game has end
-therefore return false
-*/
+
+//sendMsg - reads a string from the connection "from" and sent it to "to"
+//if it takes more than 60 seconds return false. if the msg is "end" it means the game has end
+//therefore return false
 func sendMsg(from, to net.Conn) bool {
 	var msg string
 	c := make(chan bool)
@@ -176,9 +177,6 @@ func sendMsg(from, to net.Conn) bool {
 	return false
 }
 
-/*
-start the game by alternating communication between the two connections
-*/
 func startGame(conn1, conn2 net.Conn) {
 	defer func() {
 		toClose <- conn1

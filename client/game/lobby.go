@@ -12,6 +12,7 @@ var (
 	connType = "tcp"
 )
 
+//read the host and port form cmd args
 func init() {
 	hostPtr := flag.String("host", "localhost", "ip of host")
 	portPtr := flag.String("port", "12345", "port on which to run server")
@@ -20,12 +21,17 @@ func init() {
 	port = *portPtr
 }
 
+//serverMessage is used to pass info for the server connection, whether the client is first or second turn in the game
+// and the token for the room(nil for quickplay)
 type serverMessage struct {
 	conn    net.Conn
 	isSecond bool
 	token   string
 }
 
+//createRoom connects to the server, sends the type ("wait") of client then sends the token to the channel so
+// it can be visualized in the client
+//after that it waits for the server to return a message
 func createRoom(info chan<- serverMessage) {
 	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
@@ -48,6 +54,10 @@ func createRoom(info chan<- serverMessage) {
 	info <- serverMessage{conn, isSecond, ""}
 }
 
+//connectToRoom connects to the server sends a message to the server to acknowledge
+// the game ("connect" meaning you connect to room with token)
+// sends the token to the server than recives a message from the server
+//serverMessage channel channel is used to pass the server message to other goroutines
 func connectToRoom(token string, info chan<- serverMessage) {
 	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
@@ -66,7 +76,10 @@ func connectToRoom(token string, info chan<- serverMessage) {
 	}
 	info <- serverMessage{conn, isSecond, ""}
 }
-
+	
+//quickplayLobby connects to the server sends a message to the server to acknowledge
+// the game type (quick) and waits for a message from the server
+//serverMessage channel channel is used to pass the server message to other goroutines
 func quickplayLobby(info chan<- serverMessage) {
 	conn, err := net.Dial(connType, host+":"+port)
 	if err != nil {
