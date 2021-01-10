@@ -24,9 +24,9 @@ func init() {
 //serverMessage is used to pass info for the server connection, whether the client is first or second turn in the game
 // and the token for the room(nil for quickplay)
 type serverMessage struct {
-	conn    net.Conn
+	conn     net.Conn
 	isSecond bool
-	token   string
+	token    string
 }
 
 //createRoom connects to the server, sends the type ("wait") of client then sends the token to the channel so
@@ -76,7 +76,7 @@ func connectToRoom(token string, info chan<- serverMessage) {
 	}
 	info <- serverMessage{conn, isSecond, ""}
 }
-	
+
 //quickplayLobby connects to the server sends a message to the server to acknowledge
 // the game type (quick) and waits for a message from the server
 //serverMessage channel channel is used to pass the server message to other goroutines

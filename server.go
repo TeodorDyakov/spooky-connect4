@@ -29,7 +29,6 @@ func init() {
 	connPort = *cmd
 }
 
-
 //generateToken generates a unique token to be used for a game room identifier
 func generateToken(conn net.Conn) string {
 	tokenGenMutex.Lock()
@@ -143,7 +142,6 @@ func main() {
 	}
 
 }
-
 
 //sendMsg - reads a string from the connection "from" and sent it to "to"
 //if it takes more than 60 seconds return false. if the msg is "end" it means the game has end

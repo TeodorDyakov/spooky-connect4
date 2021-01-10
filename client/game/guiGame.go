@@ -14,9 +14,9 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 	"net"
 	"os"
-	"log"
 	"strconv"
 	"time"
 )
@@ -31,7 +31,7 @@ var boardImage *ebiten.Image
 var bats *ebiten.Image
 var batsX, batsY float64
 
-func byteSliceToEbitenImage(arr []byte)*ebiten.Image{
+func byteSliceToEbitenImage(arr []byte) *ebiten.Image {
 	img, _, err := image.Decode(bytes.NewReader(arr))
 	if err != nil {
 		log.Fatal(err)
@@ -121,6 +121,7 @@ var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You
 
 //whether an opponent is running
 var opponentAnimation bool
+
 //difficutly of the AI
 var difficulty int
 
