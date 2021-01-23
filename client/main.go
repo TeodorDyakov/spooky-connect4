@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	connect4FMI.StartGuiGame()
+	gameLogic.StartGuiGame()
 }
