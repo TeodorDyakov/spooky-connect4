@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"net"
 	"sync"
@@ -64,21 +65,24 @@ func main() {
 
 	// Start the server and listen for incoming connections.
 	listener, err := net.Listen("tcp", ":"+connPort)
+
 	if err != nil {
-		//os exit
-		//
-		panic(err)
+		fmt.Println("Problem in creating tcp socket")
+		log.Fatal(err)
 	}
+
 	fmt.Println("listening on port " + connPort)
+
 	go func() {
-		// run loop forever, until exit.
 		for {
 			// Listen for an incoming connection.
 			conn, err := listener.Accept()
+
 			if err != nil {
-				//TODO
-				panic(err)
+				fmt.Println("error on accepting connection")
+				continue
 			}
+
 			fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
 
 			var playerType string
@@ -117,7 +121,7 @@ func main() {
 				if ok {
 					startGame(conn, connectTo)
 				} else {
-					fmt.Fprintf(conn, "error\n")
+					fmt.Fprintf(conn, "wrong_token\n")
 					toClose <- conn
 				}
 			}()

@@ -81,6 +81,7 @@ const (
 	connectToRoomWithToken
 	cantConnectToServer
 	enterAIdifficulty
+	wrongToken
 )
 
 const (
@@ -233,7 +234,10 @@ func (g *Game) Update() error {
 			if gameInfo.Conn == nil {
 				token = ""
 				gameState = cantConnectToServer
-			} else {
+			} else if gameInfo.Status == "wrong_token" {
+				token = ""
+				gameState = wrongToken
+			}else{
 				if gameInfo.IsSecond {
 					gameState = opponentTurn
 				} else {
@@ -245,7 +249,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if gameState == cantConnectToServer {
+	if gameState == cantConnectToServer || gameState == wrongToken{
 		frameCount++
 		if frameCount == 2*fps {
 			frameCount = 0
@@ -289,7 +293,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Reset()
 
 	op.GeoM.Translate(boardX, boardY)
-	if gameState == menu || gameState == cantConnectToServer {
+	if gameState == menu || gameState == cantConnectToServer || gameState == wrongToken{
 		screen.DrawImage(boardImage, op)
 		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY-30, color.White)
 		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
@@ -297,6 +301,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, "[O] - play online (quick play)", mplusNormalFont, boardX+250, boardY-30, color.White)
 		if gameState == cantConnectToServer {
 			text.Draw(screen, "Can't connect to server!", mplusNormalFont, 200, 200, color.White)
+		}
+		if gameState == wrongToken {
+			text.Draw(screen, "There is no room with this token!", mplusNormalFont, 200, 200, color.White)
 		}
 		return
 	}

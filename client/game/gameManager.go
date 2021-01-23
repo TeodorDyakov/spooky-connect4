@@ -19,12 +19,12 @@ type GameManager struct {
 }
 
 const (
-	Running = 0
-	Win     = 2
-	Lose    = 3
-	Tie     = 4
-	PlayerOneColor    = "◯"
-	PlayerTwoColor    = "⬤"
+	Running        = 0
+	Win            = 2
+	Lose           = 3
+	Tie            = 4
+	PlayerOneColor = "◯"
+	PlayerTwoColor = "⬤"
 )
 
 func NewGameManager(con net.Conn, ai bool, aiDiff int) GameManager {
@@ -112,10 +112,10 @@ func (gm *GameManager) ResetGame() {
 	gm.state = 0
 }
 
-func (gm* GameManager) GetWonGames()int{
+func (gm *GameManager) GetWonGames() int {
 	return gm.wonGames
 }
 
-func (gm* GameManager) GetLostGames()int{
+func (gm *GameManager) GetLostGames() int {
 	return gm.lostGames
 }
