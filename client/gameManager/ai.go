@@ -1,4 +1,4 @@
-package connect4FMI
+package gameManager
 
 import (
 	"math/rand"
@@ -21,7 +21,7 @@ func getAiMove(b *Board, strength int) int {
 	return move
 }
 
-//alphabeta implenets the alphabeta algorithm and returns the score of the given board position
+//alphabeta implements the alphabeta algorithm and returns the score of the given board position
 //and the best move for the given board position
 func alphabeta(b *Board, maximizer bool, depth, alpha, beta, max_depth int) (int, int) {
 	if depth == max_depth {

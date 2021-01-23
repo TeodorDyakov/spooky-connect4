@@ -4,6 +4,7 @@ import (
 	"bytes"
 	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/TeodorDyakov/spooky-connect4/client/gameManager"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -92,8 +93,6 @@ const (
 	boardX            = 84
 	boardY            = 130
 	gravity           = 0.5
-	playerOneColor    = "◯"
-	playerTwoColor    = "⬤"
 )
 
 //the column the opponent has chosen last
@@ -348,10 +347,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < 6; i++ {
 		for j := 0; j < 7; j++ {
-			if gm.GetHoleColor(i, j) == playerTwoColor {
-				drawBall(j, i, playerTwoColor, screen)
-			} else if gm.GetHoleColor(i, j) == playerOneColor {
-				drawBall(j, i, playerOneColor, screen)
+			if gm.GetHoleColor(i, j) == PlayerTwoColor {
+				drawBall(j, i, PlayerTwoColor, screen)
+			} else if gm.GetHoleColor(i, j) == PlayerOneColor {
+				drawBall(j, i, PlayerOneColor, screen)
 			}
 		}
 	}
@@ -410,7 +409,7 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 	}
 	op.GeoM.Translate(float64(x)*tileHeight, *fallY)
 
-	if player == playerTwoColor {
+	if player == PlayerTwoColor {
 		screen.DrawImage(redBallImage, op)
 	} else {
 		screen.DrawImage(greenBallImage, op)

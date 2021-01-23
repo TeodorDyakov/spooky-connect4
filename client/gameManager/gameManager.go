@@ -1,4 +1,4 @@
-package connect4FMI
+package gameManager
 
 import (
 	"fmt"
@@ -23,6 +23,8 @@ const (
 	Win     = 2
 	Lose    = 3
 	Tie     = 4
+	PlayerOneColor    = "◯"
+	PlayerTwoColor    = "⬤"
 )
 
 func NewGameManager(con net.Conn, ai bool, aiDiff int) gameManager {

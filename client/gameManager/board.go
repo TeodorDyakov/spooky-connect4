@@ -1,4 +1,4 @@
-package connect4FMI
+package gameManager
 
 import (
 	"fmt"
