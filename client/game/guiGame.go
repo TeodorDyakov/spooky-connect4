@@ -2,7 +2,6 @@ package connect4FMI
 
 import (
 	"bytes"
-	"fmt"
 	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -15,7 +14,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"time"
@@ -29,7 +27,6 @@ var ghost *ebiten.Image
 var greenBallImage *ebiten.Image
 var boardImage *ebiten.Image
 var bats *ebiten.Image
-var batsX, batsY float64
 
 func byteSliceToEbitenImage(arr []byte) *ebiten.Image {
 	img, _, err := image.Decode(bytes.NewReader(arr))
@@ -48,19 +45,26 @@ func init() {
 	dot = byteSliceToEbitenImage(resources.Dot_png)
 	bats = byteSliceToEbitenImage(resources.Bats_png)
 	boardImage = byteSliceToEbitenImage(resources.Board_png)
-	batsX = 440
-	batsY = 200
 	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
+	initBallYCoords()
 }
 
 type Game struct{}
 
 type GameState int
+
+func initBallYCoords() {
+	for i := 0; i < 7; i++ {
+		for j := 0; j < 6; j++ {
+			ballYcoords[i][j] = -tileHeight
+		}
+	}
+}
 
 const (
 	yourTurn GameState = iota
@@ -68,6 +72,8 @@ const (
 	win
 	lose
 	tie
+	animation
+	opponentAnimation
 	menu
 	waitingForConnect
 	waitingForToken
@@ -77,6 +83,8 @@ const (
 )
 
 const (
+	batsX             = 440
+	batsY             = 200
 	secondsToMakeTurn = 59
 	fps               = 60
 	tileHeight        = 65
@@ -90,43 +98,38 @@ const (
 
 //the column the opponent has chosen last
 var opponentLastCol int
-var lostGames int
-var wonGames int
 var frameCount int
 var gameState GameState = menu
 
-//wasFallAnimated already for the ball which should fall at the given row and column
-var wasFallAnimated [7][6]bool
+var ballYcoords [7][6]float64
+var ballFallSpeed [7][6]float64
 
-//fallSpeed of a falling ball
-var fallSpeed float64
-var board *Board = NewBoard()
-var playingAgainstAi bool
 var mplusNormalFont font.Face
-
-//fallY - the Y coordinate of the falling ball
-var fallY float64 = -tileHeight
-
-//again - channel used to wait for user to click playAgain button
-var playAgainClick chan struct{} = make(chan struct{})
-
-//channel used to send mouse clicks during game, idicating which column is clicked by user
-var columnClicked chan int = make(chan int)
 
 //this is used to receive information for setting up an online game
 var serverCommunicationChannel chan serverMessage = make(chan serverMessage)
 
 //messages shown during a match of the game
-var messages [5]string = [5]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie."}
-
-//whether an opponent is running
-var opponentAnimation bool
-
-//difficutly of the AI
-var difficulty int
+var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "...", "..."}
 
 //the token with which a user connects or the token received by server
 var token string
+
+var gm gameManager
+
+func changeGameStateBasedOnGameManagerState(gmState int) {
+	if gmState != 0 {
+		if gmState == Win {
+			gameState = win
+		}
+		if gmState == Lose {
+			gameState = lose
+		}
+		if gmState == Tie {
+			gameState = tie
+		}
+	}
+}
 
 //the main logic of the game, changing game state moving between menus and starting a match of the game
 func (g *Game) Update() error {
@@ -136,19 +139,43 @@ func (g *Game) Update() error {
 		frameCount++
 	}
 
+	if gameState == animation || gameState == opponentAnimation {
+		frameCount = 0
+	}
+
 	if frameCount == fps*secondsToMakeTurn {
 		os.Exit(1)
 	}
 
 	if gameState == yourTurn && press {
 		mouseX, _ := ebiten.CursorPosition()
-		/*
-			only send click event to buffer if someone is waiting for it
-		*/
-		select {
-		case columnClicked <- xcoordToColumn(mouseX):
-		default:
+		if gm.makePlayerTurn(xcoordToColumn(mouseX)) {
+			gameState = animation
+			go func() {
+				gmState := gm.GetState()
+				time.Sleep(1 * time.Second)
+				if gmState == Running {
+					gameState = opponentTurn
+				} else {
+					changeGameStateBasedOnGameManagerState(gmState)
+				}
+			}()
 		}
+	}
+
+	if gameState == opponentTurn {
+		gameState = animation
+		go func() {
+			opponentLastCol = gm.makeOpponentTurn()
+			gameState = opponentAnimation
+			time.Sleep(1 * time.Second)
+			gmState := gm.GetState()
+			if gmState == Running {
+				gameState = yourTurn
+			} else {
+				changeGameStateBasedOnGameManagerState(gmState)
+			}
+		}()
 	}
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -158,12 +185,10 @@ func (g *Game) Update() error {
 	if gameState == enterAIdifficulty {
 		diff := string(ebiten.InputChars())
 		if len(diff) == 1 {
-			var err error
-			difficulty, err = strconv.Atoi(diff)
+			difficulty, err := strconv.Atoi(diff)
 			if err == nil {
-				difficulty += 3
 				gameState = yourTurn
-				go playAgainstAi()
+				gm = NewGameManager(nil, true, difficulty+3)
 			}
 		}
 	}
@@ -215,7 +240,7 @@ func (g *Game) Update() error {
 				} else {
 					gameState = yourTurn
 				}
-				go playMultiplayer(gameInfo.isSecond, gameInfo.conn)
+				gm = NewGameManager(gameInfo.conn, false, 0)
 			}
 		default:
 		}
@@ -234,9 +259,16 @@ func (g *Game) Update() error {
 		/*check if mouse is in play again area
 		 */
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
-			select {
-			case playAgainClick <- struct{}{}:
-			default:
+
+			gmState := gm.GetState()
+			gm.resetGame()
+			var s [7][6]float64
+			ballFallSpeed = s
+			initBallYCoords()
+			if gmState == Win{
+				gameState = opponentTurn
+			}else{
+				gameState = yourTurn
 			}
 		}
 	}
@@ -292,12 +324,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	var msg string = messages[gameState]
-	text.Draw(screen, "W  "+strconv.Itoa(wonGames)+":"+strconv.Itoa(lostGames)+"  L", mplusNormalFont, boardX, 50, color.White)
+	text.Draw(screen, "W  "+strconv.Itoa(gm.GetWonGames())+":"+strconv.Itoa(gm.GetLostGames())+"  L", mplusNormalFont, boardX, 50, color.White)
 	text.Draw(screen, msg, mplusNormalFont, boardX, 580, color.White)
 	text.Draw(screen, "00:"+strconv.Itoa(secondsToMakeTurn-frameCount/fps), mplusNormalFont, 500, 580, color.White)
 
 	drawOwl(screen)
-	if opponentAnimation {
+	if gameState == opponentAnimation {
 		drawGhost(screen)
 	}
 
@@ -314,11 +346,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 //drawBalls draws all the balls to the screen
 func drawBalls(screen *ebiten.Image) {
-	for i := 0; i < len(board.board); i++ {
-		for j := 0; j < len(board.board[0]); j++ {
-			if board.board[i][j] == playerTwoColor {
+	for i := 0; i < 6; i++ {
+		for j := 0; j < 7; j++ {
+			if gm.GetHoleColor(i, j) == playerTwoColor {
 				drawBall(j, i, playerTwoColor, screen)
-			} else if board.board[i][j] == playerOneColor {
+			} else if gm.GetHoleColor(i, j) == playerOneColor {
 				drawBall(j, i, playerOneColor, screen)
 			}
 		}
@@ -327,9 +359,9 @@ func drawBalls(screen *ebiten.Image) {
 
 //drawWinnerDors draws the dots indicating where the winner has four connected balls
 func drawWinnerDots(screen *ebiten.Image) {
-	playerOneWin, dotsY, dotsX := board.WhereConnected(playerOneColor)
-	if !playerOneWin {
-		_, dotsY, dotsX = board.WhereConnected(playerTwoColor)
+	win, dotsY, dotsX := gm.WhereConnected()
+	if !win {
+		return
 	}
 	for i := 0; i < 4; i++ {
 		op := &ebiten.DrawImageOptions{}
@@ -365,23 +397,19 @@ func drawOwl(screen *ebiten.Image) {
 func drawBall(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
-	destY := tileOffset + float64(y)*tileHeight
 
-	if wasFallAnimated[x][y] {
-		op.GeoM.Translate(float64(x)*tileHeight, float64(y)*tileHeight)
-	} else {
-		fallY += fallSpeed
-		fallSpeed += gravity
-		if fallY > destY {
-			fallY = destY
-			fallSpeed = 0
-			wasFallAnimated[x][y] = true
-		}
-		op.GeoM.Translate(float64(x)*tileHeight, fallY)
-		if wasFallAnimated[x][y] {
-			fallY = -tileHeight
-		}
+	destY := float64(y) * tileHeight
+	fallY := &ballYcoords[x][y]
+	fallSpeed := &ballFallSpeed[x][y]
+
+	*fallY += *fallSpeed
+	*fallSpeed += gravity
+	if *fallY > destY {
+		*fallY = destY
+		*fallSpeed = 0
 	}
+	op.GeoM.Translate(float64(x)*tileHeight, *fallY)
+
 	if player == playerTwoColor {
 		screen.DrawImage(redBallImage, op)
 	} else {
@@ -396,113 +424,6 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 //xcoordToColumn returns the column correspondidng which contains the x coordinate
 func xcoordToColumn(x int) int {
 	return int(float64(x-tileOffset-boardX) / tileHeight)
-}
-
-//playAgainstAI starts a game against an AI
-func playAgainstAi() {
-	playingAgainstAi = true
-	gameLogic(playerOneColor, playerTwoColor, nil)
-}
-
-//playMulitplayer initiliazes the color of player and opponent based on whether the player isSecond and
-//stars a mutiplayer mathc on the given connection
-func playMultiplayer(isSecond bool, conn net.Conn) {
-	playerColor := playerOneColor
-	opponentColor := playerTwoColor
-	if isSecond {
-		playerColor = playerTwoColor
-		opponentColor = playerOneColor
-		gameState = opponentTurn
-	} else {
-		gameState = yourTurn
-	}
-	gameLogic(playerColor, opponentColor, conn)
-}
-
-//playTurn executes the logic for a move by one player then a move the next player
-//conn is the connection needed for multiplayer
-func playTurn(playerColor, opponentColor string, conn net.Conn) {
-	if gameState == opponentTurn {
-		var column int
-		if playingAgainstAi {
-			column = getAiMove(board, difficulty)
-		} else {
-			var msg string
-			_, err := fmt.Fscan(conn, &msg)
-			if err != nil {
-				panic(err)
-			}
-			if msg == "timeout" || msg == "error" {
-				fmt.Println("opponent disconnected!")
-				panic(nil)
-				return
-			}
-			column, _ = strconv.Atoi(msg)
-		}
-		opponentLastCol = column
-		opponentAnimation = true
-		board.Drop(column, opponentColor)
-		/*
-			wait for the animation of falling circle to finish
-		*/
-		time.Sleep(1 * time.Second)
-		opponentAnimation = false
-		frameCount = 0
-		gameState = yourTurn
-	} else if gameState == yourTurn {
-		column := <-columnClicked
-		if board.Drop(column, playerColor) {
-			frameCount = 0
-			gameState = opponentTurn
-			if !playingAgainstAi {
-				_, err := fmt.Fprintf(conn, "%d\n", column)
-				if err != nil {
-					panic(err)
-				}
-			}
-			/*
-				wait for the animation of falling circle to finish
-			*/
-			time.Sleep(1 * time.Second)
-		}
-	}
-}
-
-//plays a full match of the game than waits for the user to click play Again and starts another game
-func gameLogic(playerColor, opponentColor string, conn net.Conn) {
-	for {
-		for !board.gameOver() {
-			playTurn(playerColor, opponentColor, conn)
-		}
-		var won bool
-		if board.areFourConnected(playerColor) {
-			gameState = win
-			won = true
-			wonGames++
-		} else if board.areFourConnected(opponentColor) {
-			gameState = lose
-			won = false
-			lostGames++
-		} else {
-			gameState = tie
-		}
-		/*
-			wait for user to click play again
-		*/
-		<-playAgainClick
-		/*reset board*/
-		var arr [7][6]bool
-		wasFallAnimated = arr
-		board = NewBoard()
-		/*
-			if you won the last game you are second in the next
-		*/
-		if won {
-			gameState = opponentTurn
-		} else {
-			gameState = yourTurn
-		}
-	}
 }
 
 //StartGuiGame initializes the game and the gui, this is the entry point for the whole game

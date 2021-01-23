@@ -65,6 +65,8 @@ func main() {
 	// Start the server and listen for incoming connections.
 	listener, err := net.Listen("tcp", ":"+connPort)
 	if err != nil {
+		//os exit
+		//
 		panic(err)
 	}
 	fmt.Println("listening on port " + connPort)
@@ -74,6 +76,7 @@ func main() {
 			// Listen for an incoming connection.
 			conn, err := listener.Accept()
 			if err != nil {
+				//TODO
 				panic(err)
 			}
 			fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
