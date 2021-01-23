@@ -1,8 +1,9 @@
-package gameLogic
+package graphics
 
 import (
 	"bytes"
 	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
+	"github.com/TeodorDyakov/spooky-connect4/client/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -105,7 +106,7 @@ var ballFallSpeed [7][6]float64
 var mplusNormalFont font.Face
 
 //this is used to receive information for setting up an online game
-var serverCommunicationChannel chan ServerMessage = make(chan ServerMessage)
+var serverCommunicationChannel chan gameLogic.ServerMessage = make(chan gameLogic.ServerMessage)
 
 //messages shown during a match of the game
 var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You lost.", "Tie.", "...", "..."}
@@ -113,17 +114,17 @@ var messages [7]string = [7]string{"Your turn", "Other's turn", "You win!", "You
 //the token with which a user connects or the token received by server
 var token string
 
-var gm GameManager
+var gm gameLogic.GameManager
 
 func changeGameStateBasedOnGameManagerState(gmState int) {
 	if gmState != 0 {
-		if gmState == Win {
+		if gmState == gameLogic.Win {
 			gameState = win
 		}
-		if gmState == Lose {
+		if gmState == gameLogic.Lose {
 			gameState = lose
 		}
-		if gmState == Tie {
+		if gmState == gameLogic.Tie {
 			gameState = tie
 		}
 	}
@@ -147,12 +148,12 @@ func (g *Game) Update() error {
 
 	if gameState == yourTurn && press {
 		mouseX, _ := ebiten.CursorPosition()
-		if gm.makePlayerTurn(xcoordToColumn(mouseX)) {
+		if gm.MakePlayerTurn(xcoordToColumn(mouseX)) {
 			gameState = animation
 			go func() {
 				gmState := gm.GetState()
 				time.Sleep(1 * time.Second)
-				if gmState == Running {
+				if gmState == gameLogic.Running {
 					gameState = opponentTurn
 				} else {
 					changeGameStateBasedOnGameManagerState(gmState)
@@ -164,11 +165,11 @@ func (g *Game) Update() error {
 	if gameState == opponentTurn {
 		gameState = animation
 		go func() {
-			opponentLastCol = gm.makeOpponentTurn()
+			opponentLastCol = gm.MakeOpponentTurn()
 			gameState = opponentAnimation
 			time.Sleep(1 * time.Second)
 			gmState := gm.GetState()
-			if gmState == Running {
+			if gmState == gameLogic.Running {
 				gameState = yourTurn
 			} else {
 				changeGameStateBasedOnGameManagerState(gmState)
@@ -186,19 +187,19 @@ func (g *Game) Update() error {
 			difficulty, err := strconv.Atoi(diff)
 			if err == nil {
 				gameState = yourTurn
-				gm = NewGameManager(nil, true, difficulty+3)
+				gm = gameLogic.NewGameManager(nil, true, difficulty+3)
 			}
 		}
 	}
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyO) {
 		gameState = waitingForConnect
-		go QuickplayLobby(serverCommunicationChannel)
+		go gameLogic.QuickplayLobby(serverCommunicationChannel)
 	}
 
 	if gameState == menu && ebiten.IsKeyPressed(ebiten.KeyR) {
 		gameState = waitingForToken
-		go CreateRoom(serverCommunicationChannel)
+		go gameLogic.CreateRoom(serverCommunicationChannel)
 	}
 
 	if gameState == menu && inpututil.IsKeyJustReleased(ebiten.KeyC) {
@@ -209,17 +210,17 @@ func (g *Game) Update() error {
 		token += string(ebiten.InputChars())
 		if len(token) == 5 {
 			gameState = waitingForConnect
-			go ConnectToRoom(token, serverCommunicationChannel)
+			go gameLogic.ConnectToRoom(token, serverCommunicationChannel)
 		}
 	}
 
 	if gameState == waitingForToken {
 		select {
 		case gameInfo := <-serverCommunicationChannel:
-			if gameInfo.conn == nil {
+			if gameInfo.Conn == nil {
 				gameState = cantConnectToServer
 			} else {
-				token = gameInfo.token
+				token = gameInfo.Token
 				gameState = waitingForConnect
 			}
 		default:
@@ -229,16 +230,16 @@ func (g *Game) Update() error {
 	if gameState == waitingForConnect {
 		select {
 		case gameInfo := <-serverCommunicationChannel:
-			if gameInfo.conn == nil {
+			if gameInfo.Conn == nil {
 				token = ""
 				gameState = cantConnectToServer
 			} else {
-				if gameInfo.isSecond {
+				if gameInfo.IsSecond {
 					gameState = opponentTurn
 				} else {
 					gameState = yourTurn
 				}
-				gm = NewGameManager(gameInfo.conn, false, 0)
+				gm = gameLogic.NewGameManager(gameInfo.Conn, false, 0)
 			}
 		default:
 		}
@@ -259,11 +260,11 @@ func (g *Game) Update() error {
 		if mouseX >= 230 && mouseX <= 600 && mouseY >= 500 {
 
 			gmState := gm.GetState()
-			gm.resetGame()
+			gm.ResetGame()
 			var s [7][6]float64
 			ballFallSpeed = s
 			initBallYCoords()
-			if gmState == Win{
+			if gmState == gameLogic.Win{
 				gameState = opponentTurn
 			}else{
 				gameState = yourTurn
@@ -346,10 +347,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func drawBalls(screen *ebiten.Image) {
 	for i := 0; i < 6; i++ {
 		for j := 0; j < 7; j++ {
-			if gm.GetHoleColor(i, j) == PlayerTwoColor {
-				drawBall(j, i, PlayerTwoColor, screen)
-			} else if gm.GetHoleColor(i, j) == PlayerOneColor {
-				drawBall(j, i, PlayerOneColor, screen)
+			if gm.GetHoleColor(i, j) == gameLogic.PlayerTwoColor {
+				drawBall(j, i, gameLogic.PlayerTwoColor, screen)
+			} else if gm.GetHoleColor(i, j) == gameLogic.PlayerOneColor {
+				drawBall(j, i, gameLogic.PlayerOneColor, screen)
 			}
 		}
 	}
@@ -408,7 +409,7 @@ func drawBall(x, y int, player string, screen *ebiten.Image) {
 	}
 	op.GeoM.Translate(float64(x)*tileHeight, *fallY)
 
-	if player == PlayerTwoColor {
+	if player == gameLogic.PlayerTwoColor {
 		screen.DrawImage(redBallImage, op)
 	} else {
 		screen.DrawImage(greenBallImage, op)

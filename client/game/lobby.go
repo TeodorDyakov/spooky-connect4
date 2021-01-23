@@ -24,9 +24,9 @@ func init() {
 //ServerMessage is used to pass info for the server connection, whether the client is first or second turn in the game
 // and the token for the room(nil for quickplay)
 type ServerMessage struct {
-	conn     net.Conn
-	isSecond bool
-	token    string
+	Conn     net.Conn
+	IsSecond bool
+	Token    string
 }
 
 //createRoom connects to the server, sends the type ("wait") of client then sends the token to the channel so

@@ -47,7 +47,7 @@ func (gm *GameManager) GetState() int {
 	return gm.state
 }
 
-func (gm *GameManager) makePlayerTurn(column int) bool {
+func (gm *GameManager) MakePlayerTurn(column int) bool {
 	if gm.board.Drop(column, gm.color()) {
 		if gm.board.areFourConnected(gm.color()) {
 			gm.state = Win
@@ -69,7 +69,7 @@ func (gm *GameManager) makePlayerTurn(column int) bool {
 	return false
 }
 
-func (gm *GameManager) makeOpponentTurn() int {
+func (gm *GameManager) MakeOpponentTurn() int {
 	var column int
 	if gm.ai {
 		column = getAiMove(&gm.board, gm.aiDiff)
@@ -106,7 +106,7 @@ func (gm *GameManager) WhereConnected() (bool, [4]int, [4]int) {
 	return connected, x, y
 }
 
-func (gm *GameManager) resetGame() {
+func (gm *GameManager) ResetGame() {
 	gm.board = *NewBoard()
 	gm.turn = 0
 	gm.state = 0
