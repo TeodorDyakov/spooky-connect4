@@ -2,8 +2,8 @@ package graphics
 
 import (
 	"bytes"
-	"github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/TeodorDyakov/spooky-connect4/client/game"
+	"github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -19,14 +19,14 @@ import (
 	"time"
 )
 
-var backgroundImage *ebiten.Image
-var owl *ebiten.Image
-var redBallImage *ebiten.Image
-var dot *ebiten.Image
-var ghost *ebiten.Image
-var greenBallImage *ebiten.Image
-var boardImage *ebiten.Image
-var bats *ebiten.Image
+var backgroundImage,
+	owl,
+	redBallImage,
+	dot,
+	ghost,
+	greenBallImage,
+	boardImage,
+	bats *ebiten.Image
 
 func byteSliceToEbitenImage(arr []byte) *ebiten.Image {
 	img, _, err := image.Decode(bytes.NewReader(arr))
@@ -236,7 +236,7 @@ func (g *Game) Update() error {
 			} else if gameInfo.Status == "wrong_token" {
 				token = ""
 				gameState = wrongToken
-			}else{
+			} else {
 				if gameInfo.IsSecond {
 					gameState = opponentTurn
 				} else {
@@ -248,7 +248,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if gameState == cantConnectToServer || gameState == wrongToken{
+	if gameState == cantConnectToServer || gameState == wrongToken {
 		frameCount++
 		if frameCount == 2*fps {
 			frameCount = 0
@@ -267,9 +267,9 @@ func (g *Game) Update() error {
 			var s [7][6]float64
 			ballFallSpeed = s
 			initBallYCoords()
-			if gmState == gameLogic.Win{
+			if gmState == gameLogic.Win {
 				gameState = opponentTurn
-			}else{
+			} else {
 				gameState = yourTurn
 			}
 		}
@@ -292,7 +292,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Reset()
 
 	op.GeoM.Translate(boardX, boardY)
-	if gameState == menu || gameState == cantConnectToServer || gameState == wrongToken{
+	if gameState == menu || gameState == cantConnectToServer || gameState == wrongToken {
 		screen.DrawImage(boardImage, op)
 		text.Draw(screen, "[A] - play against AI", mplusNormalFont, boardX, boardY-30, color.White)
 		text.Draw(screen, "[R] - create a room", mplusNormalFont, boardX, 570, color.White)
