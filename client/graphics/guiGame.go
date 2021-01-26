@@ -2,10 +2,9 @@ package graphics
 
 import (
 	"bytes"
-	resources "github.com/TeodorDyakov/spooky-connect4/client/resources"
+	"github.com/TeodorDyakov/spooky-connect4/client/resources"
 	"github.com/TeodorDyakov/spooky-connect4/client/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
@@ -46,7 +45,7 @@ func init() {
 	dot = byteSliceToEbitenImage(resources.Dot_png)
 	bats = byteSliceToEbitenImage(resources.Bats_png)
 	boardImage = byteSliceToEbitenImage(resources.Board_png)
-	tt, _ := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	tt, _ := opentype.Parse(resources.MPlus1pRegular_ttf)
 	mplusNormalFont, _ = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    20,
 		DPI:     72,
