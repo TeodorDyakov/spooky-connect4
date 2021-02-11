@@ -54,8 +54,8 @@ connecion that are unused and must be closed
 */
 var toClose chan net.Conn = make(chan net.Conn, 128)
 
-func main() {
-	var quickOpponent net.Conn
+func start(){
+var quickOpponent net.Conn
 	//those who connect tot a room with a token
 	connectors := make(chan net.Conn, 128)
 	//those who created a room and wait for ssomeone to connect to them
@@ -87,8 +87,8 @@ func main() {
 
 			var playerType string
 			fmt.Fscan(conn, &playerType)
-
 			if playerType == "connect" {
+			fmt.Println(playerType)
 				connectors <- conn
 			} else if playerType == "wait" {
 				waiters <- conn
@@ -147,7 +147,10 @@ func main() {
 			}()
 		}
 	}
+}
 
+func main() {
+	start();
 }
 
 //sendMsg - reads a string from the connection "from" and sent it to "to"

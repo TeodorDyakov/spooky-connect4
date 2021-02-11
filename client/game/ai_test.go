@@ -28,7 +28,7 @@ func TestGetAiMoveTwoMoveFromLose(t *testing.T) {
 	board.Drop(4, PlayerOneColor)
 
 	bestMove := getAiMove(board, 10)
-
+	
 	if bestMove != 2 && bestMove != 5 {
 		t.Errorf("AI did not made expected move, expected %d, got %d", 2, bestMove)
 	}
