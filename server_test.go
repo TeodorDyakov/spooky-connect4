@@ -12,17 +12,33 @@ var _ = func() bool {
 	return true
 }()
 
-func TestServer(t *testing.T) {
+func TestServerRoomGame(t *testing.T) {
    	go start()
 
-   	time.Sleep(1*time.Second)
-   	
-   	conn, err := net.Dial("tcp", ":12345")
+   	time.Sleep(1*time.Second)	
+
+    wrongTokenConn, err := net.Dial("tcp", ":12345")
     if err != nil {
         t.Fatal(err)
     }
 
-    defer conn.Close()
+	fmt.Fprintf(wrongTokenConn, "connect\n")	    
+	//try to connect with wrong token
+	fmt.Fprintf(wrongTokenConn, "%s\n", "wrong123")
+
+	var response string
+    fmt.Fscan(wrongTokenConn, &response)
+	//we expect the server to return "wrong_token" for the one who connects
+    if response != "wrong_token" {
+		t.Errorf("expected response to be \"wrong token\" but it was %s\n", response)
+	}
+
+	wrongTokenConn.Close()
+
+	conn, err := net.Dial("tcp", ":12345")
+    if err != nil {
+        t.Fatal(err)
+    }
 
     //first the one who creates room connects 
     fmt.Fprintf(conn, "wait\n")
@@ -38,21 +54,17 @@ func TestServer(t *testing.T) {
 	connectToRoom, err := net.Dial("tcp", ":12345")
     if err != nil {
         t.Fatal(err)
-    }	
-
-	fmt.Fprintf(connectToRoom, "connect\n")
+    }
+    
+    fmt.Fprintf(connectToRoom, "connect\n")
     fmt.Fprintf(connectToRoom, "%s\n", token)
+	fmt.Fscan(connectToRoom, &response)
 
-    var response string
 
-    fmt.Fscan(connectToRoom, &response)
-
-    //we expect the server to return "first" for the one who connects
     if response != "first" {
 		t.Errorf("expected response to be \"first\" but it was %s\n", response)
 	}
 
-	//expect the other player to be second
 	fmt.Fscan(conn, &response)
 
 	if response != "second" {

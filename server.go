@@ -88,7 +88,6 @@ var quickOpponent net.Conn
 			var playerType string
 			fmt.Fscan(conn, &playerType)
 			if playerType == "connect" {
-			fmt.Println(playerType)
 				connectors <- conn
 			} else if playerType == "wait" {
 				waiters <- conn
@@ -110,6 +109,7 @@ var quickOpponent net.Conn
 					toClose <- conn
 				}
 				var connectTo net.Conn
+				
 				ok := false
 				// check if conn is in map, synchronized so we dont get two player to connect to one
 				mutex.Lock()
@@ -117,7 +117,7 @@ var quickOpponent net.Conn
 					delete(tokenToConn, opponentToken)
 				}
 				mutex.Unlock()
-
+				
 				if ok {
 					startGame(conn, connectTo)
 				} else {
