@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 )
@@ -13,55 +13,54 @@ var _ = func() bool {
 }()
 
 func TestServerRoomGame(t *testing.T) {
-   	go start()
+	go start()
 
-   	time.Sleep(1*time.Second)	
+	time.Sleep(1 * time.Second)
 
-    wrongTokenConn, err := net.Dial("tcp", ":12345")
-    if err != nil {
-        t.Fatal(err)
-    }
+	wrongTokenConn, err := net.Dial("tcp", ":12345")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	fmt.Fprintf(wrongTokenConn, "connect\n")	    
+	fmt.Fprintf(wrongTokenConn, "connect\n")
 	//try to connect with wrong token
 	fmt.Fprintf(wrongTokenConn, "%s\n", "wrong123")
 
 	var response string
-    fmt.Fscan(wrongTokenConn, &response)
+	fmt.Fscan(wrongTokenConn, &response)
 	//we expect the server to return "wrong_token" for the one who connects
-    if response != "wrong_token" {
+	if response != "wrong_token" {
 		t.Errorf("expected response to be \"wrong token\" but it was %s\n", response)
 	}
 
 	wrongTokenConn.Close()
 
 	conn, err := net.Dial("tcp", ":12345")
-    if err != nil {
-        t.Fatal(err)
-    }
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    //first the one who creates room connects 
-    fmt.Fprintf(conn, "wait\n")
+	//first the one who creates room connects
+	fmt.Fprintf(conn, "wait\n")
 
-    var token string
-    fmt.Fscan(conn, &token)
+	var token string
+	fmt.Fscan(conn, &token)
 
-    //we expect the server to return us a 5 characters random token
-    if len(token) != 5 {
+	//we expect the server to return us a 5 characters random token
+	if len(token) != 5 {
 		t.Errorf("server did not return 5 character token but returned %s\n", token)
 	}
 
 	connectToRoom, err := net.Dial("tcp", ":12345")
-    if err != nil {
-        t.Fatal(err)
-    }
-    
-    fmt.Fprintf(connectToRoom, "connect\n")
-    fmt.Fprintf(connectToRoom, "%s\n", token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Fprintf(connectToRoom, "connect\n")
+	fmt.Fprintf(connectToRoom, "%s\n", token)
 	fmt.Fscan(connectToRoom, &response)
 
-
-    if response != "first" {
+	if response != "first" {
 		t.Errorf("expected response to be \"first\" but it was %s\n", response)
 	}
 

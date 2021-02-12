@@ -54,8 +54,8 @@ connecion that are unused and must be closed
 */
 var toClose chan net.Conn = make(chan net.Conn, 128)
 
-func start(){
-var quickOpponent net.Conn
+func start() {
+	var quickOpponent net.Conn
 	//those who connect tot a room with a token
 	connectors := make(chan net.Conn, 128)
 	//those who created a room and wait for ssomeone to connect to them
@@ -109,7 +109,7 @@ var quickOpponent net.Conn
 					toClose <- conn
 				}
 				var connectTo net.Conn
-				
+
 				ok := false
 				// check if conn is in map, synchronized so we dont get two player to connect to one
 				mutex.Lock()
@@ -117,7 +117,7 @@ var quickOpponent net.Conn
 					delete(tokenToConn, opponentToken)
 				}
 				mutex.Unlock()
-				
+
 				if ok {
 					startGame(conn, connectTo)
 				} else {
@@ -150,7 +150,7 @@ var quickOpponent net.Conn
 }
 
 func main() {
-	start();
+	start()
 }
 
 //sendMsg - reads a string from the connection "from" and sent it to "to"
