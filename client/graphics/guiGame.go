@@ -129,6 +129,27 @@ func changeGameStateBasedOnGameManagerState(gmState int) {
 		}
 	}
 }
+	
+func updateBallPos(){
+	for i := 0; i < 6; i++ {
+		for j := 0; j < 7; j++ {
+			if gm.GetHoleColor(i, j) == gameLogic.PlayerTwoColor ||
+			gm.GetHoleColor(i, j) == gameLogic.PlayerOneColor {
+				y, x := i, j
+				destY := float64(y) * tileHeight
+				fallY := &ballYcoords[x][y]
+				fallSpeed := &ballFallSpeed[x][y]
+
+				*fallY += *fallSpeed
+				*fallSpeed += gravity
+				if *fallY > destY {
+					*fallY = destY
+					*fallSpeed = 0
+				}
+			}
+		}
+	}
+}
 
 //the main logic of the game, changing game state moving between menus and starting a match of the game
 func (g *Game) Update() error {
@@ -140,11 +161,14 @@ func (g *Game) Update() error {
 
 	if gameState == animation || gameState == opponentAnimation {
 		frameCount = 0
+		updateBallPos();
 	}
 
 	if frameCount == fps*secondsToMakeTurn {
 		os.Exit(1)
 	}
+
+	// updateBallPos();
 
 	if gameState == yourTurn && press {
 		mouseX, _ := ebiten.CursorPosition()
@@ -402,24 +426,30 @@ func drawOwl(screen *ebiten.Image) {
 func drawBall(x, y int, player string, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(boardX+tileOffset, boardY+tileOffset)
-
-	destY := float64(y) * tileHeight
-	fallY := &ballYcoords[x][y]
-	fallSpeed := &ballFallSpeed[x][y]
-
-	*fallY += *fallSpeed
-	*fallSpeed += gravity
-	if *fallY > destY {
-		*fallY = destY
-		*fallSpeed = 0
-	}
-	op.GeoM.Translate(float64(x)*tileHeight, *fallY)
-
+	op.GeoM.Translate(float64(x)*tileHeight, ballYcoords[x][y]);
+	
 	if player == gameLogic.PlayerTwoColor {
 		screen.DrawImage(redBallImage, op)
 	} else {
 		screen.DrawImage(greenBallImage, op)
 	}
+}
+
+func updateBallsPos(x, y int){
+	// for y := 0; y < 6; y++ {
+	// 	for x := 0; x < 7; x++ {
+			destY := float64(y) * tileHeight
+			fallY := &ballYcoords[x][y]
+			fallSpeed := &ballFallSpeed[x][y]
+
+			*fallY += *fallSpeed
+			*fallSpeed += gravity
+			if *fallY > destY {
+				*fallY = destY
+				*fallSpeed = 0
+			}		
+	// 	}
+	// }
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
